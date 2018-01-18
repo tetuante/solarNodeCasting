@@ -1,0 +1,15 @@
+{
+    "input_sta": [
+        "probando.txt",
+        "probando2.txt"
+    ],
+    "dest_folder": "output/",
+    "dest_file": "probando.csv",
+    "nsamples": 4,
+    "ntime": 5,
+    "predictiont": "12:00:01 77 2010",
+    "offset": 1,
+    "original_column_names": ["s", "y", "doy", "hst", "ghi"],
+    "average": false,
+    "coordinates": false
+}
