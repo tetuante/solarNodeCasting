@@ -1,0 +1,42 @@
+{
+    "normalized_csv_paths": [
+        "data/after_20170718.csv",
+        "data/after_20170719.csv",
+        "data/after_20170720.csv",
+        "data/after_20170721.csv",
+        "data/after_20170725.csv",
+        "data/after_20170727.csv",
+        "data/after_20170728.csv",
+        "data/after_20170801.csv",
+        "data/after_20170802.csv",		
+        "data/after_20170804.csv",		
+        "data/after_20170807.csv",		
+        "data/after_20170808.csv"	
+    ],
+    "results_destination_folder": "data/grid_search_results",
+    "training_sets_config": {
+        "destination_folder": "data/xy",
+        "n_samples": [1],
+        "target_distances": [0],
+        "original_prefix_column_names": [],
+        "original_column_names": ["azimuth", "elevation", "temperature", "humidity", "vPanel", "vPyra"],
+        "x_prefix_column_names": [],
+        "x_column_names": ["azimuth", "elevation", "temperature", "humidity", "vPanel"],
+        "y_colum_names": ["vPyra"],
+        "original_y_column_name": ["vPyra"]
+    },
+    "estimator_configs": [
+	{
+        "module": "sklearn.linear_model",
+        "class": "linear_model",
+        "model": "LinearRegression",
+        "scoring": "r2",
+        "map": "regression",
+        "parameters": [{
+			"fit_intercept": [true, false],
+            "normalize": [true, false],
+            "copy_X": [true]
+        }]
+    }
+	]
+}
