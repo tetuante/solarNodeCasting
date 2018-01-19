@@ -7,7 +7,7 @@
     "dest_file": "probando.csv",
     "nsamples": 4,
     "ntime": 5,
-    "predictiont": "12:00:01 77 2010",
+    "predictiont": "12:00:50 77 2010",
     "offset": 1,
     "original_column_names": ["s", "y", "doy", "hst", "ghi"],
     "average": false,

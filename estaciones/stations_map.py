@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import json
 import numpy as np
@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 
 #Loading our data, probably we won't need everything but whatever:
 stations = pd.read_csv('stations.txt',sep='\t')
-station_id = stations['Station'].astype(basestring)
+station_id = str(stations['Station'])
 lat = stations['Latitude']
-long = stations['Longitude']
+lon = stations['Longitude']
 sensor = stations['Sensor']
 CF = stations['CF']
 
@@ -26,10 +26,10 @@ ax.set_xlabel("Longitude")
 ax.set_ylabel("Latitude")
 
 #Let's set a small value to fit the data in the X&Y axes without fitting it too much (20 is an arbitrary value)
-x_ax_fit = abs(long.max() - long.min()) / 20
+x_ax_fit = abs(lon.max() - lon.min()) / 20
 y_ax_fit = abs(lat.max() - lat.min()) / 20
 
-plt.xlim((long.min() - x_ax_fit), (long.max() + x_ax_fit))
+plt.xlim((lon.min() - x_ax_fit), (lon.max() + x_ax_fit))
 plt.ylim((lat.min() - y_ax_fit), (lat.max() + y_ax_fit))
 
 plt.show()
