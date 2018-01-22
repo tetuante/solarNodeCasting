@@ -3,7 +3,6 @@
 import json
 import pandas as pd
 import os
-import glob
 import errno
 import numpy as np
 

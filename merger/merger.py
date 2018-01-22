@@ -29,7 +29,7 @@ for in_file in in_files:
     for sta in stations:
         stations_df[sta] = stations_df[sta].append(df[ t_names + [sta] ], ignore_index=True)
 
-#WARNING: this will overwrite any axisting CSV file with the same path and name
+#WARNING: this will overwrite any existing CSV file with the same path and name
 for sta in stations_df:
     with open(out_folder + '/' + sta + '/' + sta + '.csv', 'w') as f:
         stations_df[sta].columns = t_names + ['ghi']

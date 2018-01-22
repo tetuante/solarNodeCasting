@@ -1,15 +1,81 @@
 {
-    "input_sta": [
-        "probando.txt",
-        "probando2.txt"
-    ],
+    "input_stations": ["dh3", "dh4", "dh5", "dh10", "dh11", "dh9", "dh2", "dh1", "ap6", "ap1", "ap3", "ap5", "ap4", "ap7", "dh6", "dh7", "dh8"],
+    "target_station": "ap1",
+    "orig_folder": "input/",
     "dest_folder": "output/",
-    "dest_file": "probando.csv",
-    "nsamples": 4,
-    "ntime": 5,
-    "predictiont": "12:00:50 77 2010",
-    "offset": 1,
-    "original_column_names": ["s", "y", "doy", "hst", "ghi"],
-    "average": false,
-    "coordinates": false
+    "dest_file": "matrix.csv",
+    "time_granularity": 5,
+    "params": {
+        "ap1": {
+            "nsamples": 5,
+            "offset": 1
+        },
+        "ap3": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "ap4": {
+            "nsamples": 4,
+            "offset": 2
+        },
+        "ap5": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "ap6": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "ap7": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh1": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh2": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh3": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh4": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh5": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh6": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh7": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh8": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh9": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh10": {
+            "nsamples": 4,
+            "offset": 1
+        },
+        "dh11": {
+            "nsamples": 4,
+            "offset": 1
+        }
+    },
+    "orig_columns_names": ["s", "y", "doy", "hst", "ghi"],
+    "aggregation": "skip",
+    "relative": true
 }
