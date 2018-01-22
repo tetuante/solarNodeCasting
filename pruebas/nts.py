@@ -39,7 +39,6 @@ for station in stations:
     ghi = df['ghi']
 
     predictiont_index = df.loc[(df['hst'] == hst) & (df['s'] == s) & (df['doy'] == doy) & (df['y'] == y)].index[0]
-    print('predictiont_index: {}'.format(predictiont_index))
     if ((predictiont_index - nsamples * ntime - offset * ntime) < 0):
         raise NameError('Error, try a bigger starting time or less samples')
     #This will be the matrix with all the GHIs for the current station:
