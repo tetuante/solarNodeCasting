@@ -27,13 +27,15 @@ aggregation = cfg_data["aggregation"]
 
 x = pd.DataFrame() # This matrix will include the features
 y = pd.DataFrame() # This matrix will include the target
-
+latitude = params[target_station]['latitude']
+longitude = params[target_station]['longitude']
 # Find out what is the oldest sample (biggest nsamples + offset)
 oldest_sample = 0
 for station in input_stations:
     index = params[station]['nsamples'] + params[station]['offset']
     if index > oldest_sample:
         oldest_sample = index
+
 oldest_sample *= time_granularity
 
 with open(orig_folder + target_station + '/' + target_station + '.csv', 'r') as f:
