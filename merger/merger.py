@@ -32,5 +32,5 @@ for in_file in in_files:
 #WARNING: this will overwrite any existing CSV file with the same path and name
 for sta in stations_df:
     with open(out_folder + '/' + sta + '/' + sta + '.csv', 'w') as f:
-        stations_df[sta].columns = t_names + ['ghi']
+        stations_df[sta].columns = t_names + [sta]
         stations_df[sta].to_csv(f,header=True,index=False)
