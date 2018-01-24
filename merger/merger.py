@@ -11,6 +11,10 @@ sta_names = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11', 'dh9', 'dh2', 'dh1', 'dh1tilt'
 stations = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11', 'dh9', 'dh2', 'dh1', 'ap6', 'ap1', 'ap3', 'ap5', 'ap4', 'ap7', 'dh6', 'dh7', 'dh8'] # Stations to consider
 out_folder = 'output'
 
+# Only consider data between 08:00 and 15:59 (HST)
+initial_hour = 800
+final_hour = 1559
+
 in_files = glob.glob('*.txt')
 
 stations_df = {} # Dictionary containing a dataframe per station
@@ -24,7 +28,9 @@ for sta in stations:
 
 for in_file in in_files:
     # We use dtype=str to avoid losing precision due to data type conversions
-    df = pd.read_csv(in_file, header=None, names=t_names+sta_names, dtype=str)
+    df = pd.read_csv(in_file, header=None, names=t_names+sta_names, dtype={sta: str for sta in sta_names})
+
+    df = df.loc[(df['hst'] >= initial_hour) & (df['hst'] <= final_hour)]
 
     for sta in stations:
         stations_df[sta] = stations_df[sta].append(df[ t_names + [sta] ], ignore_index=True)
