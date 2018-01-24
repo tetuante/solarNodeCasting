@@ -2,7 +2,6 @@
 
 import pandas as pd
 import os
-import glob
 
 t_names = ['s', 'y', 'doy', 'hst']
 sta_names = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11', 'dh9', 'dh2', 'dh1', 'dh1tilt', 'ap6', 'ap6tilt', 'ap1', 'ap3', 'ap5', 'ap4', 'ap7', 'dh6', 'dh7', 'dh8']
@@ -12,36 +11,29 @@ in_folder = 'input'
 out_folder = 'output'
 nstations = len(stations)
 
-# Only consider data between 08:00 and 15:59 (HST)
-initial_hour = 800
-final_hour = 1559
+# Only consider data between 07:30 and 17:30 (HST)
+initial_hour = 730
+final_hour = 1729
 
-in_files = glob.glob(in_folder + '/' + '*.txt')
+in_files = os.listdir('input')
 nfiles = len(in_files)
-
-stations_df = {} # Dictionary containing a dataframe per station
 
 # Create output directory if it doesn't exist and instantiate dataframes
 for sta in stations:
-    stations_df[sta] = pd.DataFrame()
     folder = out_folder + '/' + sta
     if not os.path.exists(folder):
         os.makedirs(folder)
 
 for in_file in in_files:
-    print('[{}/{}] Reading {}...'.format(in_files.index(in_file)+1, nfiles, in_file))
+    date = in_file.split('.')[0]
+    in_path = in_folder + '/' + in_file
+    print('[{}/{}] Reading {}...'.format(in_files.index(in_file)+1, nfiles, in_path))
     # We use dtype=str to avoid losing precision due to data type conversions
-    df = pd.read_csv(in_file, header=None, names=t_names+sta_names, dtype={sta: str for sta in sta_names})
-
+    df = pd.read_csv(in_path, header=None, names=t_names+sta_names, dtype={sta: str for sta in sta_names})
+    # Take daylight data
     df = df.loc[(df['hst'] >= initial_hour) & (df['hst'] <= final_hour)]
 
     for sta in stations:
-        stations_df[sta] = stations_df[sta].append(df[ t_names + [sta] ], ignore_index=True)
-
-#WARNING: this will overwrite any existing CSV file with the same path and name
-for sta in stations_df:
-    csv = out_folder + '/' + sta + '/' + sta + '.csv'
-    with open(csv, 'w') as f:
-        print('[{}/{}] Writing {}...'.format(stations.index(sta)+1, nstations, csv))
-        stations_df[sta].columns = t_names + [sta]
-        stations_df[sta].to_csv(f,header=True,index=False)
+        out_path = out_folder + '/' + sta + '/' + date + '_' + sta + '.csv'
+        print('\t[{}/{}] Writing {}...'.format(stations.index(sta)+1, nstations, out_path))
+        df[t_names + [sta]].to_csv(out_path,header=True,index=False)
