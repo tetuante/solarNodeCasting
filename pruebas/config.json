@@ -108,7 +108,7 @@
             "longitude": -158.0853
         }
     },
-    "orig_columns_names": ["s", "y", "doy", "hst", "ghi"],
+    "orig_time_columns_names": ["s", "y", "doy", "hst"],
     "aggregation": "skip",
     "relative": true
 }
