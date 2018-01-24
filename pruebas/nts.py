@@ -46,8 +46,7 @@ for station in cfg_data['params']:
         first_prediction_index = index
 first_prediction = first_prediction_index * time_granularity
 
-with open(orig_folder + target_station + '/' + target_station + '.csv', 'r') as f:
-    y = pd.read_csv(f)
+y = pd.read_csv(orig_folder + target_station + '/' + target_station + '.csv')
 
 print('$$$$$$$$$$ ' + target_station + ' $$$$$$$$$$')
 print('TOTAL ROWS: {}\n'.format(len(y)))
@@ -61,8 +60,7 @@ print('FIRST PREDICTION: {}\nLAST PREDICTION: {}\nROWS: {}\n'.format(y.first_val
 for station in cfg_data['params']:
     nsamples = params[station]['nsamples']
     offset = params[station]['offset']
-    with open(orig_folder + station + '/' + station + '.csv', 'r') as f:
-        df = pd.read_csv(f)
+    df = pd.read_csv(orig_folder + station + '/' + station + '.csv')
 
     print('########## ' + station + ' ##########')
     print('TOTAL ROWS: {}\n'.format(len(df)))
@@ -88,5 +86,4 @@ y = y.rename(columns={target_station: ghi_col})
 matrix = pd.concat([x,y[ghi_col].reset_index(drop=True)], axis=1)
 
 #WARNING: this will overwrite any existing CSV file with the same path and name
-with open(dest_folder + dest_file, 'w') as f:
-    matrix.to_csv(f,header=True,index=False)
+matrix.to_csv(dest_folder + dest_file, header=True, index=False)
