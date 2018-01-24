@@ -87,8 +87,6 @@ y = y.rename(columns={target_station: ghi_col})
 # Only GHI is needed. We need to reset the index in order to concatenate columns properly
 matrix = pd.concat([x,y[ghi_col].reset_index(drop=True)], axis=1)
 
-'''
 #WARNING: this will overwrite any existing CSV file with the same path and name
 with open(dest_folder + dest_file, 'w') as f:
     matrix.to_csv(f,header=True,index=False)
-'''
