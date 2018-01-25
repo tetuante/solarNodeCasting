@@ -1,39 +1,56 @@
 #!/usr/bin/env python3
 
 import pandas as pd
+import json
 import os
+from datetime import datetime as dt
+from pysolar.solar import *
 
-t_names = ['s', 'y', 'doy', 'hst']
-sta_names = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11', 'dh9', 'dh2', 'dh1', 'dh1tilt', 'ap6', 'ap6tilt', 'ap1', 'ap3', 'ap5', 'ap4', 'ap7', 'dh6', 'dh7', 'dh8']
+with open('config.json', 'r') as cfg_file:
+    cfg_data = json.load(cfg_file)
 
-stations = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11', 'dh9', 'dh2', 'dh1', 'ap6', 'ap1', 'ap3', 'ap5', 'ap4', 'ap7', 'dh6', 'dh7', 'dh8'] # Stations to consider
-in_folder = 'input'
-out_folder = 'output'
+t_columns = ['s', 'y', 'doy', 'hst']
+sta_columns = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11',
+             'dh9', 'dh2', 'dh1', 'dh1tilt', 'ap6',
+             'ap6tilt', 'ap1', 'ap3', 'ap5', 'ap4',
+             'ap7', 'dh6', 'dh7', 'dh8']
+
+# Stations to consider
+stations = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11', 'dh9', 'dh2', 'dh1',
+            'ap6', 'ap1', 'ap3', 'ap5', 'ap4', 'ap7', 'dh6', 'dh7', 'dh8']
 nstations = len(stations)
 
 # Only consider data between 07:30 and 17:30 (HST)
 initial_hour = 730
 final_hour = 1729
 
-in_files = os.listdir('input')
-nfiles = len(in_files)
+input_folder = 'input'
+output_folder = 'output'
 
-# Create output directory if it doesn't exist and instantiate dataframes
-for sta in stations:
-    folder = out_folder + '/' + sta
+input_files = os.listdir('input')
+nfiles = len(input_files)
+
+# Create output directory if it doesn't exist
+for station in stations:
+    folder = output_folder + '/' + station
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-for in_file in in_files:
-    date = in_file.split('.')[0]
-    in_path = in_folder + '/' + in_file
-    print('[{}/{}] Reading {}...'.format(in_files.index(in_file)+1, nfiles, in_path))
-    # We use dtype=str to avoid losing precision due to data type conversions
-    df = pd.read_csv(in_path, header=None, names=t_names+sta_names, dtype={sta: str for sta in sta_names})
-    # Take daylight data
-    df = df.loc[(df['hst'] >= initial_hour) & (df['hst'] <= final_hour)]
+for input_file in input_files:
+    date = input_file.rstrip('.txt')
+    input_path = input_folder + '/' + input_file
+    print('[{}/{}] Reading {}...'.format(input_files.index(input_file)+1, nfiles, input_path))
 
-    for sta in stations:
-        out_path = out_folder + '/' + sta + '/' + date + '_' + sta + '.csv'
-        print('\t[{}/{}] Writing {}...'.format(stations.index(sta)+1, nstations, out_path))
-        df[t_names + [sta]].to_csv(out_path,header=True,index=False)
+    df = pd.read_csv(input_path, header=None, names=t_columns+sta_columns).round({station: 4 for station in sta_columns})
+
+    # Take daylight data
+    df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
+
+    # Split data by date and station and add clear-sky radiation and radiation/clear-sky ratio
+    for station in stations:
+        latitude = cfg_data['params'][station]['latitude']
+        longitude = cfg_data['params'][station]['longitude']
+
+        output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
+        print('\t[{}/{}] Writing {}...'.format(stations.index(station)+1, nstations, output_path))
+        df[t_columns + [station]].to_csv(output_path,header=True,index=False)
