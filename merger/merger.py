@@ -46,11 +46,33 @@ for input_file in input_files:
     # Take daylight data
     df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
 
+    '''
+    Pending:
+        - Add solar azimuth and altitude to every date_station.to_csv (az, el columns)
+        - Add GHI / clear-sky ratio to every date_station.to_csv (station_rel column)
+    '''
     # Split data by date and station and add clear-sky radiation and radiation/clear-sky ratio
     for station in stations:
-        latitude = cfg_data['params'][station]['latitude']
-        longitude = cfg_data['params'][station]['longitude']
+        lat = cfg_data['params'][station]['latitude']
+        lon = cfg_data['params'][station]['longitude']
+
+        # Take data corresponding to this station and reset the index
+        sta_df = df[t_columns + [station]].reset_index(drop=True)
+
+        # Convert time related columns to datetimes and store them in a new column
+        dt_df = pd.to_datetime(sta_df.s.apply(str) + ' ' + sta_df.y.apply(str) + ' ' + sta_df.doy.apply(str) + ' ' + sta_df.hst.apply(str), format='%S %Y %j %H%M')
+
+        az_df = pd.DataFrame()
+        el_df = pd.DataFrame()
+        for datetime in dt_df:
+            az_df = az_df.append({'az': get_azimuth(lat, lon, datetime)}, ignore_index=True)
+            el_df = el_df.append({'el': get_altitude(lat, lon, datetime)}, ignore_index=True)
+            print(el_df)
+
+        sta_df = pd.concat([dt_df, sta_df], axis=1)
+
+        sta_df.columns = ['hst datetime', station + '_ghi']
 
         output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
         print('\t[{}/{}] Writing {}...'.format(stations.index(station)+1, nstations, output_path))
-        df[t_columns + [station]].to_csv(output_path,header=True,index=False)
+        sta_df.to_csv(output_path,header=True,index=False)
