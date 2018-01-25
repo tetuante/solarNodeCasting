@@ -35,9 +35,6 @@ with open('config.json', 'r') as cfg_file:
     with open(dest_folder + 'config.json', 'w') as f:
         f.write(cfg_file.read())
 
-latitude = params[target_station]['latitude']
-longitude = params[target_station]['longitude']
-
 # Find out what is the first possible prediction
 first_prediction_index = 0
 for station in cfg_data['params']:
