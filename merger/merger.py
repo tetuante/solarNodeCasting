@@ -3,7 +3,6 @@
 import pandas as pd
 import json
 import os
-from datetime import datetime as dt
 from pysolar.solar import *
 
 with open('config.json', 'r') as cfg_file:
@@ -48,7 +47,6 @@ for input_file in input_files:
 
     '''
     Pending:
-        - Add solar azimuth and altitude to every date_station.to_csv (az, el columns)
         - Add GHI / clear-sky ratio to every date_station.to_csv (station_rel column)
     '''
     # Split data by date and station and add clear-sky radiation and radiation/clear-sky ratio
@@ -59,18 +57,23 @@ for input_file in input_files:
         # Take data corresponding to this station and reset the index
         sta_df = df[t_columns + [station]].reset_index(drop=True)
 
-        # Convert time related columns to datetimes and store them in a new column
+        # Convert time related columns to datetimes and store them in a new dataframe
         dt_df = pd.to_datetime(sta_df.s.apply(str) + ' ' + sta_df.y.apply(str) + ' ' + sta_df.doy.apply(str) + ' ' + sta_df.hst.apply(str), format='%S %Y %j %H%M')
+        dt_df = dt_df.dt.tz_localize('HST')
 
-        # az_df = pd.DataFrame()
-        # el_df = pd.DataFrame()
-        # for datetime in dt_df:
-        #     az_df = az_df.append({'az': get_azimuth(lat, lon, datetime)}, ignore_index=True)
-        #     el_df = el_df.append({'el': get_altitude(lat, lon, datetime)}, ignore_index=True)
-        #     print(el_df)
+        az_df = pd.DataFrame()
+        el_df = pd.DataFrame()
+        cs_df = pd.DataFrame()
+        for datetime in dt_df:
+            az_df = az_df.append({'az': get_azimuth(lat, lon, datetime)}, ignore_index=True)
+            elevation = get_altitude(lat, lon, datetime)
+            el_df = el_df.append({'el': elevation}, ignore_index=True)
+            cs_df = cs_df.append({'cs': radiation.get_radiation_direct(datetime, elevation)}, ignore_index=True)
 
-        sta_df = pd.concat([dt_df, sta_df[station]], axis=1)
-        sta_df.columns = ['hst datetime', station + '_ghi']
+        sta_df = sta_df[station]
+
+        sta_df = pd.concat([dt_df, az_df, el_df, sta_df, sta_df/cs_df['cs']], axis=1)
+        sta_df.columns = ['hst datetime', 'az', 'el', station + '_ghi', station + '_rel']
 
         output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
         print('\t[{}/{}] Writing {}...'.format(stations.index(station)+1, nstations, output_path))
