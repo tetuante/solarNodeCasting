@@ -62,15 +62,14 @@ for input_file in input_files:
         # Convert time related columns to datetimes and store them in a new column
         dt_df = pd.to_datetime(sta_df.s.apply(str) + ' ' + sta_df.y.apply(str) + ' ' + sta_df.doy.apply(str) + ' ' + sta_df.hst.apply(str), format='%S %Y %j %H%M')
 
-        az_df = pd.DataFrame()
-        el_df = pd.DataFrame()
-        for datetime in dt_df:
-            az_df = az_df.append({'az': get_azimuth(lat, lon, datetime)}, ignore_index=True)
-            el_df = el_df.append({'el': get_altitude(lat, lon, datetime)}, ignore_index=True)
-            print(el_df)
+        # az_df = pd.DataFrame()
+        # el_df = pd.DataFrame()
+        # for datetime in dt_df:
+        #     az_df = az_df.append({'az': get_azimuth(lat, lon, datetime)}, ignore_index=True)
+        #     el_df = el_df.append({'el': get_altitude(lat, lon, datetime)}, ignore_index=True)
+        #     print(el_df)
 
-        sta_df = pd.concat([dt_df, sta_df], axis=1)
-
+        sta_df = pd.concat([dt_df, sta_df[station]], axis=1)
         sta_df.columns = ['hst datetime', station + '_ghi']
 
         output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
