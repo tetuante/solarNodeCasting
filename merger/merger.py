@@ -93,7 +93,7 @@ for input_file in input_files:
             sta_df.columns = ['hst datetime', 'az', 'el', station + '_ghi', station + '_rel']
 
             output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
-            print('        Writing ' + output_path + ' ...')
+            print('        Writing ' + output_path + '...')
             sta_df.to_csv(output_path,header=True,index=False)
 
 print('\nTotal input files: ' + str(nfiles))

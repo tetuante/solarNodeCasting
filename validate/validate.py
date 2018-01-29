@@ -32,20 +32,21 @@ for input_file in input_files:
     # Take daylight data
     df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
 
-    if False in (df[stations] > 0).values:
-        n += 1
-        valid = False
-        print('Negative values were found... We will skip this day')
-    else:
-        for i in range(len(df.s) - 1):
-            if (df.s.iloc[i+1] - df.s.iloc[i]) not in (1, -59):
-                m += 1
-                valid = False
-                print('Some seconds are missing... We will skip this day')
-                break
+    for station in stations:
+        if False in (df[stations] > 0.0).values:
+            n += 1
+            valid = False
+            print('Negative values were found... We will skip this day')
+        else:
+            for i in range(len(df.s) - 1):
+                if (df.s.iloc[i+1] - df.s.iloc[i]) not in (1, -59):
+                    m += 1
+                    valid = False
+                    print('Some seconds are missing... We will skip this day')
+                    break
 
-    if valid:
-        print('Data seem valid!')
+        if valid:
+            print('Data seem valid!')
 
 print('\nTotal files: ' + str(nfiles))
 print('Ivalid files: ' + str(n+m))
