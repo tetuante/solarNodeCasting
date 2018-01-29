@@ -19,9 +19,10 @@ stations = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11', 'dh9', 'dh2', 'dh1',
 initial_hour = 730
 final_hour = 1729
 
-n=0
+n = 0
 
 for input_file in input_files:
+    valid = True
     input_path = input_folder + '/' + input_file
     print('\n[{}/{}] Reading {}...'.format(input_files.index(input_file)+1, nfiles, input_path), end=' ')
 
@@ -31,5 +32,15 @@ for input_file in input_files:
     df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
 
     if False in (df[stations] > 0).values:
+        valid = False
+    else:
+        for i in range(len(df.s) - 1):
+            if (df.s.iloc[i+1] - df.s.iloc[i]) not in (1, -59):
+                valid = False
+                break
+
+    if valid:
+        print('Data seem valid!')
+    else:
         n += 1
-        print('Ups! ---->' + str(n))
+        print('Invalid data... Skipping ' + str(n) + ' files')
