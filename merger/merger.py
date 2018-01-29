@@ -39,7 +39,7 @@ for input_file in input_files:
     valid = True
     date = input_file.rstrip('.txt')
     input_path = input_folder + '/' + input_file
-    print('[{}/{}] Reading {}...'.format(input_files.index(input_file)+1, nfiles, input_path))
+    print('[{}/{}] Reading {}...'.format(input_files.index(input_file)+1, nfiles, input_path), end = ' ')
 
     df = pd.read_csv(input_path, header=None, names=t_columns+sta_columns).round({station: 4 for station in sta_columns})
 
@@ -49,12 +49,12 @@ for input_file in input_files:
     # Validate data: we will skip this input_file if it contains negative data or
     # if any measurement is missing
     if False in (df[stations] > 0).values:
-        print('Negative values were found...')
+        print('Negative values were found... We will skip this day')
         valid = False
     else:
         for i in range(len(df.s) - 1):
             if (df.s.iloc[i+1] - df.s.iloc[i]) not in (1, -59):
-                print('Some seconds are missing...')
+                print('Some seconds are missing... We will skip this day')
                 valid = False
                 break
 
@@ -89,5 +89,3 @@ for input_file in input_files:
             output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
             print('\n\t[{}/{}] Writing {}...'.format(stations.index(station)+1, nstations, output_path))
             sta_df.to_csv(output_path,header=True,index=False)
-    else:
-        print('We will skip this day')
