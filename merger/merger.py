@@ -67,6 +67,7 @@ for input_file in input_files:
         print('Data seem valid!')
         # Split data by date and station and add clear-sky radiation and radiation/clear-sky ratio
         for station in stations:
+            print('    [{}/{}] Processing station {}...'.format(stations.index(station)+1, nstations, station))
             lat = cfg_data['params'][station]['latitude']
             lon = cfg_data['params'][station]['longitude']
 
@@ -92,7 +93,7 @@ for input_file in input_files:
             sta_df.columns = ['hst datetime', 'az', 'el', station + '_ghi', station + '_rel']
 
             output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
-            print('\n\t[{}/{}] Writing {}...'.format(stations.index(station)+1, nstations, output_path))
+            print('        Writing ' + output_path + ' ...')
             sta_df.to_csv(output_path,header=True,index=False)
 
 print('\nTotal input files: ' + str(nfiles))
