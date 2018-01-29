@@ -36,6 +36,7 @@ for station in stations:
         os.makedirs(folder)
 
 for input_file in input_files:
+    valid = True
     date = input_file.rstrip('.txt')
     input_path = input_folder + '/' + input_file
     print('[{}/{}] Reading {}...'.format(input_files.index(input_file)+1, nfiles, input_path))
@@ -45,36 +46,37 @@ for input_file in input_files:
     # Take daylight data
     df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
 
-    '''
-    Pending:
-        - Add GHI / clear-sky ratio to every date_station.to_csv (station_rel column)
-    '''
-    # Split data by date and station and add clear-sky radiation and radiation/clear-sky ratio
-    for station in stations:
-        lat = cfg_data['params'][station]['latitude']
-        lon = cfg_data['params'][station]['longitude']
+    if False in (df[stations] > 0).values:
+        print('NOT VALID!')
+        valid = False
 
-        # Take data corresponding to this station and reset the index
-        sta_df = df[t_columns + [station]].reset_index(drop=True)
+    if valid:
+        # Split data by date and station and add clear-sky radiation and radiation/clear-sky ratio
+        for station in stations:
+            lat = cfg_data['params'][station]['latitude']
+            lon = cfg_data['params'][station]['longitude']
 
-        # Convert time related columns to datetimes and store them in a new dataframe
-        dt_df = pd.to_datetime(sta_df.s.apply(str) + ' ' + sta_df.y.apply(str) + ' ' + sta_df.doy.apply(str) + ' ' + sta_df.hst.apply(str), format='%S %Y %j %H%M')
-        dt_df = dt_df.dt.tz_localize('HST')
+            # Take data corresponding to this station and reset the index
+            sta_df = df[t_columns + [station]].reset_index(drop=True)
 
-        az_df = pd.DataFrame()
-        el_df = pd.DataFrame()
-        cs_df = pd.DataFrame()
-        for datetime in dt_df:
-            az_df = az_df.append({'az': get_azimuth(lat, lon, datetime)}, ignore_index=True)
-            elevation = get_altitude(lat, lon, datetime)
-            el_df = el_df.append({'el': elevation}, ignore_index=True)
-            cs_df = cs_df.append({'cs': radiation.get_radiation_direct(datetime, elevation)}, ignore_index=True)
+            # Convert time related columns to datetimes and store them in a new dataframe
+            dt_df = pd.to_datetime(sta_df.s.apply(str) + ' ' + sta_df.y.apply(str) + ' ' + sta_df.doy.apply(str) + ' ' + sta_df.hst.apply(str), format='%S %Y %j %H%M')
+            dt_df = dt_df.dt.tz_localize('HST')
 
-        sta_df = sta_df[station]
+            az_df = pd.DataFrame()
+            el_df = pd.DataFrame()
+            cs_df = pd.DataFrame()
+            for datetime in dt_df:
+                az_df = az_df.append({'az': get_azimuth(lat, lon, datetime)}, ignore_index=True)
+                elevation = get_altitude(lat, lon, datetime)
+                el_df = el_df.append({'el': elevation}, ignore_index=True)
+                cs_df = cs_df.append({'cs': radiation.get_radiation_direct(datetime, elevation)}, ignore_index=True)
 
-        sta_df = pd.concat([dt_df, az_df, el_df, sta_df, sta_df/cs_df['cs']], axis=1)
-        sta_df.columns = ['hst datetime', 'az', 'el', station + '_ghi', station + '_rel']
+            sta_df = sta_df[station]
 
-        output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
-        print('\t[{}/{}] Writing {}...'.format(stations.index(station)+1, nstations, output_path))
-        sta_df.to_csv(output_path,header=True,index=False)
+            sta_df = pd.concat([dt_df, az_df, el_df, sta_df, sta_df/cs_df['cs']], axis=1)
+            sta_df.columns = ['hst datetime', 'az', 'el', station + '_ghi', station + '_rel']
+
+            output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
+            print('\n\t[{}/{}] Writing {}...'.format(stations.index(station)+1, nstations, output_path))
+            sta_df.to_csv(output_path,header=True,index=False)
