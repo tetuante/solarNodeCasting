@@ -35,6 +35,9 @@ for station in stations:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
+ninvalid = 0
+minvalid = 0
+
 for input_file in input_files:
     valid = True
     date = input_file.rstrip('.txt')
@@ -50,11 +53,13 @@ for input_file in input_files:
     # if any measurement is missing
     if False in (df[stations] > 0).values:
         print('Negative values were found... We will skip this day')
+        ninvalid += 1
         valid = False
     else:
         for i in range(len(df.s) - 1):
             if (df.s.iloc[i+1] - df.s.iloc[i]) not in (1, -59):
                 print('Some seconds are missing... We will skip this day')
+                minvalid += 0
                 valid = False
                 break
 
@@ -89,3 +94,9 @@ for input_file in input_files:
             output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
             print('\n\t[{}/{}] Writing {}...'.format(stations.index(station)+1, nstations, output_path))
             sta_df.to_csv(output_path,header=True,index=False)
+
+print('\nTotal input files: ' + str(nfiles))
+print('    Ivalid files: ' + str(ninvalid+minvalid))
+print('        Files with negative values: ' + str(ninvalid))
+print('        Files with missing seconds: ' + str(minvalid))
+print('    Valid files: ' + str(nfiles-ninvalid-minvalid))
