@@ -19,7 +19,7 @@ stations = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11', 'dh9', 'dh2', 'dh1',
 initial_hour = 730
 final_hour = 1729
 
-n = 0
+n=0
 
 for input_file in input_files:
     input_path = input_folder + '/' + input_file
@@ -29,9 +29,7 @@ for input_file in input_files:
 
     # Take daylight data
     df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
-    df = df[stations]
-    for col in stations:
-        if (df[col] < 0).any():
-            n += 1
-            print('MAAAAAAAL!!!! ---> ' + str(n))
-            break
+
+    if False in (df[stations] > 0).values:
+        n += 1
+        print('Ups! ---->' + str(n))
