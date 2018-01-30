@@ -2,9 +2,7 @@
 
 import os
 import pandas as pd
-import numpy as np
 import json
-import pysolar
 
 with open('config.json', 'r') as cfg_file:
     cfg_data = json.load(cfg_file)
@@ -18,10 +16,18 @@ dest_file = cfg_data['dest_file']
 time_granularity = cfg_data['time_granularity']
 
 params = cfg_data['params']
+stations = [station for station in params]
+nstations = len(stations)
 
 orig_time_columns_names = cfg_data['orig_time_columns_names']
 
 aggregation = cfg_data["aggregation"]
+relative = cfg_data["relative"]
+
+if relative:
+    rad_col = '_rel'
+else:
+    rad_col = '_ghi'
 
 x = pd.DataFrame() # This matrix will include the features
 y = pd.DataFrame() # This matrix will include the target
@@ -35,6 +41,15 @@ with open('config.json', 'r') as cfg_file:
     with open(dest_folder + 'config.json', 'w') as f:
         f.write(cfg_file.read())
 
+# Get available dates
+dates = []
+for station in stations:
+    dates += [date[:8] for date in os.listdir(orig_folder + station)]
+unique_dates = list(set(dates))
+for date in unique_dates:
+    if dates.count(date) < nstations:
+        unique_dates.remove(date)
+
 # Find out what is the first possible prediction
 first_prediction_index = 0
 for station in cfg_data['params']:
@@ -43,44 +58,47 @@ for station in cfg_data['params']:
         first_prediction_index = index
 first_prediction = first_prediction_index * time_granularity
 
-y = pd.read_csv(orig_folder + target_station + '/' + target_station + '.csv')
+for date in unique_dates:
+    print('++++++++++++++++++++++++++++')
+    print(date)
+    print('++++++++++++++++++++++++++++')
+    y = pd.read_csv(orig_folder + target_station + '/' + date + '_' + target_station + '.csv')
 
-print('$$$$$$$$$$ ' + target_station + ' $$$$$$$$$$')
-print('TOTAL ROWS: {}\n'.format(len(y)))
+    print('$$$$$$$$$$ ' + target_station + ' $$$$$$$$$$')
+    print('TOTAL ROWS: {}\n'.format(len(y)))
 
-# We will skip intermediate samples for now
-y = y[first_prediction::time_granularity]
-last_prediction = y.last_valid_index()
+    # We will skip intermediate samples for now
+    y = y[first_prediction::time_granularity]
+    last_prediction = y.last_valid_index()
 
-print('FIRST PREDICTION: {}\nLAST PREDICTION: {}\nROWS: {}\n'.format(y.first_valid_index(), y.last_valid_index(), len(y)))
+    print('FIRST PREDICTION: {}\nLAST PREDICTION: {}\nROWS: {}\n'.format(y.first_valid_index(), y.last_valid_index(), len(y)))
 
-for station in cfg_data['params']:
-    nsamples = params[station]['nsamples']
-    offset = params[station]['offset']
-    df = pd.read_csv(orig_folder + station + '/' + station + '.csv')
+    for station in stations:
+        nsamples = params[station]['nsamples']
+        offset = params[station]['offset']
+        df = pd.read_csv(orig_folder + station + '/' + date + '_' + station + '.csv')
 
-    print('########## ' + station + ' ##########')
-    print('TOTAL ROWS: {}\n'.format(len(df)))
+        print('########## ' + station + ' ##########')
+        print('TOTAL ROWS: {}\n'.format(len(df)))
 
-    for ns in range(nsamples):
-        dist = (ns + offset + 1) * time_granularity
-        first_sample = first_prediction - dist
-        last_sample = last_prediction - dist
-        # We will skip intermediate samples for now
-        _x = df[first_sample:last_sample + time_granularity:time_granularity]
-        print('FIRST SAMPLE: {}\nLAST SAMPLE: {}\nROWS: {}\n'.format(_x.first_valid_index(), _x.last_valid_index(), len(_x)))
-        # Rename GHI column to include station name and nsample
-        ghi_col = station + '_ns' + str(ns)
-        _x = _x.rename(columns={station: ghi_col})
-        # Only GHI is needed. We need to reset the index in order to concatenate columns properly
-        x = pd.concat([x,_x[ghi_col].reset_index(drop=True)], axis=1)
+        for ns in range(nsamples):
+            dist = (ns + offset + 1) * time_granularity
+            first_sample = first_prediction - dist
+            last_sample = last_prediction - dist
+            # We will skip intermediate samples for now
+            _x = df[first_sample:last_sample + time_granularity:time_granularity]
+            print('FIRST SAMPLE: {}\nLAST SAMPLE: {}\nROWS: {}\n'.format(_x.first_valid_index(), _x.last_valid_index(), len(_x)))
+            # Rename column to include ns
+            col_name = station + rad_col + '_ns' + str(ns)
+            _x = _x.rename(columns={station + rad_col: col_name})
+            # Only relative GHI is needed. We need to reset the index in order to concatenate columns properly
+            x = pd.concat([x,_x[col_name].reset_index(drop=True)], axis=1)
 
-# Rename GHI column to include station name and target indicator
-ghi_col = target_station + '_target'
-y = y.rename(columns={target_station: ghi_col})
+    # Rename column to include ns
+    col_name = target_station + rad_col + '_target'
+    y = y.rename(columns={target_station + rad_col: col_name})
+    # Only GHI is needed. We need to reset the index in order to concatenate columns properly
+    matrix = pd.concat([x,y[['az', 'el', col_name]].reset_index(drop=True)], axis=1)
 
-# Only GHI is needed. We need to reset the index in order to concatenate columns properly
-matrix = pd.concat([x,y[ghi_col].reset_index(drop=True)], axis=1)
-
-#WARNING: this will overwrite any existing CSV file with the same path and name
-matrix.to_csv(dest_folder + dest_file, header=True, index=False)
+    #WARNING: this will overwrite any existing CSV file with the same path and name
+    matrix.to_csv(dest_folder + date + '_' + dest_file, header=True, index=False)
