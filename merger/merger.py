@@ -76,7 +76,8 @@ for input_file in input_files:
 
             # Convert time related columns to datetimes and store them in a new dataframe
             dt_df = pd.to_datetime(sta_df.s.apply(str) + ' ' + sta_df.y.apply(str) + ' ' + sta_df.doy.apply(str) + ' ' + sta_df.hst.apply(str), format='%S %Y %j %H%M')
-            dt_df = dt_df.dt.tz_localize('HST')
+            dt_df = dt_df.dt.tz_localize('HST') # This sets tzinfo to HST
+            # dt_df = dt_df.dt.tz_convert(None) # This converts time to UTC and removes tzinfo
 
             az_df = pd.DataFrame()
             el_df = pd.DataFrame()
