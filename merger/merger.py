@@ -4,6 +4,7 @@ import pandas as pd
 import json
 import os
 from pysolar.solar import *
+import sys
 
 with open('config.json', 'r') as cfg_file:
     cfg_data = json.load(cfg_file)
@@ -18,6 +19,14 @@ sta_columns = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11',
 stations = ['dh3', 'dh4', 'dh5', 'dh10', 'dh11', 'dh9', 'dh2', 'dh1',
             'ap6', 'ap1', 'ap3', 'ap5', 'ap4', 'ap7', 'dh6', 'dh7', 'dh8']
 nstations = len(stations)
+
+if len(sys.argv) > 1:
+    stations = [str(station) for station in sys.argv[1:]]
+    nstations = len(sys.argv) - 1
+
+for station in stations:
+    if station not in sta_columns:
+        raise NameError('Invalid station. Valid stations are:\n' + str(sta_columns))
 
 # Only consider data between 07:30 and 17:30 (HST)
 initial_hour = 730
