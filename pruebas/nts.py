@@ -16,7 +16,7 @@ dest_file_suffix = cfg_data['dest_file_suffix']
 time_granularity = cfg_data['time_granularity']
 
 params = cfg_data['params']
-stations = [station for station in params]
+stations = [station for station in params if params[station]['nsamples'] > 0]
 nstations = len(stations)
 
 aggregation = cfg_data["aggregation"]
