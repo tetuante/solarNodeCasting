@@ -40,14 +40,13 @@ with open('config.json', 'r') as cfg_file:
         f.write(cfg_file.read())
 
 # Get dates that are available for all stations
-dates = []
+dates = set([date[:8] for date in os.listdir(orig_folder + stations[0])])
 for station in stations:
-    dates += [date[:8] for date in os.listdir(orig_folder + station)]
-unique_dates = list(set(dates))
-for date in unique_dates:
-    if dates.count(date) < nstations:
-        unique_dates.remove(date)
-ndates = len(unique_dates)
+    station_dates = set([date[:8] for date in os.listdir(orig_folder + station)])
+    dates.intersection_update(station_dates)
+
+dates = list(dates)
+ndates = len(dates)
 
 print('Days available: {}'.format(ndates))
 
@@ -59,9 +58,9 @@ for station in cfg_data['params']:
         first_prediction_index = index
 first_prediction = first_prediction_index * time_granularity
 
-for date in unique_dates:
+for date in dates:
 
-    print('[{}/{}] Processing {}...'.format(unique_dates.index(date)+1, ndates, date), end='\r')
+    print('[{}/{}] Processing {}...'.format(dates.index(date)+1, ndates, date), end='\r')
 
     y = pd.read_csv(orig_folder + target_station + '/' + date + '_' + target_station + '.csv')
 
