@@ -41,7 +41,7 @@ with open('config.json', 'r') as cfg_file:
     with open(dest_folder + 'config.json', 'w') as f:
         f.write(cfg_file.read())
 
-# Get available dates
+# Get dates that are available for all stations
 dates = []
 for station in stations:
     dates += [date[:8] for date in os.listdir(orig_folder + station)]
@@ -49,6 +49,8 @@ unique_dates = list(set(dates))
 for date in unique_dates:
     if dates.count(date) < nstations:
         unique_dates.remove(date)
+
+print('Days available: ' + str(len(unique_dates)))
 
 # Find out what is the first possible prediction
 first_prediction_index = 0

@@ -30,7 +30,6 @@ for input_file in input_files:
 
     # Take daylight data
     df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
-
     if False in (df[stations] > 0.0).values:
         n += 1
         valid = False
