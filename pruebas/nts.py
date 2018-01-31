@@ -49,8 +49,9 @@ unique_dates = list(set(dates))
 for date in unique_dates:
     if dates.count(date) < nstations:
         unique_dates.remove(date)
+ndates = len(unique_dates)
 
-print('Days available: ' + str(len(unique_dates)))
+print('Days available: {}'.format(ndates))
 
 # Find out what is the first possible prediction
 first_prediction_index = 0
@@ -61,27 +62,27 @@ for station in cfg_data['params']:
 first_prediction = first_prediction_index * time_granularity
 
 for date in unique_dates:
-    print('++++++++++++++++++++++++++++')
-    print(date)
-    print('++++++++++++++++++++++++++++')
+
+    print('[{}/{}] Processing {}...'.format(unique_dates.index(date)+1, ndates, date), end='\r')
+
     y = pd.read_csv(orig_folder + target_station + '/' + date + '_' + target_station + '.csv')
 
-    print('$$$$$$$$$$ ' + target_station + ' $$$$$$$$$$')
-    print('TOTAL ROWS: {}\n'.format(len(y)))
+    # print('$$$$$$$$$$ ' + target_station + ' $$$$$$$$$$')
+    # print('TOTAL ROWS: {}\n'.format(len(y)))
 
     # We will skip intermediate samples for now
     y = y[first_prediction::time_granularity]
     last_prediction = y.last_valid_index()
 
-    print('FIRST PREDICTION: {}\nLAST PREDICTION: {}\nROWS: {}\n'.format(y.first_valid_index(), y.last_valid_index(), len(y)))
+    # print('FIRST PREDICTION: {}\nLAST PREDICTION: {}\nROWS: {}\n'.format(y.first_valid_index(), y.last_valid_index(), len(y)))
 
     for station in stations:
         nsamples = params[station]['nsamples']
         offset = params[station]['offset']
         df = pd.read_csv(orig_folder + station + '/' + date + '_' + station + '.csv')
 
-        print('########## ' + station + ' ##########')
-        print('TOTAL ROWS: {}\n'.format(len(df)))
+        # print('########## ' + station + ' ##########')
+        # print('TOTAL ROWS: {}\n'.format(len(df)))
 
         for ns in range(nsamples):
             dist = (ns + offset + 1) * time_granularity
@@ -89,7 +90,7 @@ for date in unique_dates:
             last_sample = last_prediction - dist
             # We will skip intermediate samples for now
             _x = df[first_sample:last_sample + time_granularity:time_granularity]
-            print('FIRST SAMPLE: {}\nLAST SAMPLE: {}\nROWS: {}\n'.format(_x.first_valid_index(), _x.last_valid_index(), len(_x)))
+            # print('FIRST SAMPLE: {}\nLAST SAMPLE: {}\nROWS: {}\n'.format(_x.first_valid_index(), _x.last_valid_index(), len(_x)))
             # Rename column to include ns
             col_name = station + rad_col + '_ns' + str(ns)
             _x = _x.rename(columns={station + rad_col: col_name})
