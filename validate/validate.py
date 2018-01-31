@@ -20,36 +20,25 @@ initial_hour = 730
 final_hour = 1729
 
 n = 0
-m = 0
 
 for input_file in input_files:
     valid = True
     input_path = input_folder + '/' + input_file
     print('[{}/{}] Reading {}...'.format(input_files.index(input_file)+1, nfiles, input_path), end=' ')
 
-    df = pd.read_csv(input_path, header=None, names=t_columns+sta_columns)
+    df = pd.read_csv(input_path, header=None, names=t_columns+sta_columns).round({station: 4 for station in sta_columns})
 
     # Take daylight data
     df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
 
-    for station in stations:
-        if False in (df[stations] > 0.0).values:
-            n += 1
-            valid = False
-            print('Negative values were found... We will skip this day')
-        else:
-            for i in range(len(df.s) - 1):
-                if (df.s.iloc[i+1] - df.s.iloc[i]) not in (1, -59):
-                    m += 1
-                    valid = False
-                    print('Some seconds are missing... We will skip this day')
-                    break
+    if False in (df[stations] > 0.0).values:
+        n += 1
+        valid = False
+        print('Negative values were found... We will skip this day')
 
-        if valid:
-            print('Data seem valid!')
+    if valid:
+        print('Data seem valid!')
 
 print('\nTotal files: ' + str(nfiles))
-print('Ivalid files: ' + str(n+m))
-print('\tFiles with negative values: ' + str(n))
-print('\tFiles with missing seconds: ' + str(m))
-print('Valid files: ' + str(nfiles-n))
+print('\tIvalid files: ' + str(n))
+print('\tValid files: ' + str(nfiles-n))
