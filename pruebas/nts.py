@@ -11,15 +11,13 @@ target_station = cfg_data['target_station']
 
 orig_folder = cfg_data['orig_folder']
 dest_folder = cfg_data['dest_folder']
-dest_file = cfg_data['dest_file']
+dest_file_suffix = cfg_data['dest_file_suffix']
 
 time_granularity = cfg_data['time_granularity']
 
 params = cfg_data['params']
 stations = [station for station in params]
 nstations = len(stations)
-
-orig_time_columns_names = cfg_data['orig_time_columns_names']
 
 aggregation = cfg_data["aggregation"]
 relative = cfg_data["relative"]
@@ -104,4 +102,4 @@ for date in unique_dates:
     matrix = pd.concat([x,y[['az', 'el', col_name]].reset_index(drop=True)], axis=1)
 
     #WARNING: this will overwrite any existing CSV file with the same path and name
-    matrix.to_csv(dest_folder + date + '_' + dest_file, header=True, index=False)
+    matrix.to_csv(dest_folder + date + '_' + dest_file_suffix, header=True, index=False)

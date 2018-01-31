@@ -2,7 +2,7 @@
     "target_station": "ap1",
     "orig_folder": "input/",
     "dest_folder": "output/",
-    "dest_file": "matrix.csv",
+    "dest_file_suffix": "matrix.csv",
     "time_granularity": 5,
     "params": {
         "ap1": {
@@ -108,7 +108,6 @@
             "longitude": -158.0853
         }
     },
-    "orig_time_columns_names": ["s", "y", "doy", "hst"],
     "aggregation": "skip",
     "relative": true
 }
