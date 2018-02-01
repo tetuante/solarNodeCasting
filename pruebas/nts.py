@@ -27,9 +27,6 @@ if relative:
 else:
     rad_col = '_ghi'
 
-x = pd.DataFrame() # This matrix will include the features
-y = pd.DataFrame() # This matrix will include the target
-
 # Create output directory if it doesn't exist
 if not os.path.exists(dest_folder):
     os.makedirs(dest_folder)
@@ -60,7 +57,11 @@ first_prediction = first_prediction_index * time_granularity
 
 for date in dates:
 
-    print('[{}/{}] Processing {}...'.format(dates.index(date)+1, ndates, date), end='\r')
+    x = pd.DataFrame() # This matrix will include the features
+    y = pd.DataFrame() # This matrix will include the target
+    matrix = pd.DataFrame() # This matrix will store x and y
+
+    print('[{}/{}] Processing {}...'.format(dates.index(date)+1, ndates, date))
 
     y = pd.read_csv(orig_folder + target_station + '/' + date + '_' + target_station + '.csv')
 
