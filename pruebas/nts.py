@@ -89,16 +89,16 @@ for date in dates:
             # We will skip intermediate samples for now
             _x = df[first_sample:last_sample + time_granularity:time_granularity]
             # print('FIRST SAMPLE: {}\nLAST SAMPLE: {}\nROWS: {}\n'.format(_x.first_valid_index(), _x.last_valid_index(), len(_x)))
-            # Rename column to include ns
+            # Rename column to include ghi/rel and ns
             col_name = station + rad_col + '_ns' + str(ns)
             _x = _x.rename(columns={station + rad_col: col_name})
-            # Only relative GHI is needed. We need to reset the index in order to concatenate columns properly
+            # Only radiation is needed. We need to reset the index in order to concatenate columns properly
             x = pd.concat([x,_x[col_name].reset_index(drop=True)], axis=1)
 
-    # Rename column to include ns
+    # Rename column to include ghi/rel and target
     col_name = target_station + rad_col + '_target'
     y = y.rename(columns={target_station + rad_col: col_name})
-    # Only GHI is needed. We need to reset the index in order to concatenate columns properly
+    # Only radiation and sun position is needed. We need to reset the index in order to concatenate columns properly
     matrix = pd.concat([x,y[['az', 'el', col_name]].reset_index(drop=True)], axis=1)
 
     #WARNING: this will overwrite any existing CSV file with the same path and name

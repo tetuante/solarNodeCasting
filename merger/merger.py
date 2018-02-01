@@ -57,8 +57,7 @@ for input_file in input_files:
     # Take daylight data
     df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
 
-    # Validate data: we will skip this input_file if it contains negative data or
-    # if any measurement is missing
+    # Validate data: we will skip this input_file if it contains negative data
     if False in (df[stations] > 0.0).values:
         print('Negative values were found... We will skip this day')
         ninvalid += 1
@@ -66,7 +65,7 @@ for input_file in input_files:
 
     if valid:
         print('Data seem valid!')
-        # Split data by date and station and add clear-sky radiation and radiation/clear-sky ratio
+        # Split data by date and station and add sun position, GHI and GHI/clear-sky ratio
         for station in stations:
             print('    [{}/{}] Processing station {}...'.format(stations.index(station)+1, nstations, station))
             lat = cfg_data['params'][station]['latitude']
