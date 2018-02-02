@@ -21,6 +21,7 @@ nstations = len(stations)
 
 aggregation = cfg_data["aggregation"]
 relative = cfg_data["relative"]
+decimal_pos = cfg_data["decimal_pos"]
 
 if relative:
     rad_col = '_rel'
@@ -63,7 +64,7 @@ for date in dates:
 
     print('[{}/{}] Processing {}...'.format(dates.index(date)+1, ndates, date))
 
-    y = pd.read_csv(orig_folder + target_station + '/' + date + '_' + target_station + '.csv')
+    y = pd.read_csv(orig_folder + target_station + '/' + date + '_' + target_station + '.csv').round(decimal_pos)
 
     # print('$$$$$$$$$$ ' + target_station + ' $$$$$$$$$$')
     # print('TOTAL ROWS: {}\n'.format(len(y)))
@@ -77,7 +78,7 @@ for date in dates:
     for station in stations:
         nsamples = params[station]['nsamples']
         offset = params[station]['offset']
-        df = pd.read_csv(orig_folder + station + '/' + date + '_' + station + '.csv')
+        df = pd.read_csv(orig_folder + station + '/' + date + '_' + station + '.csv').round(decimal_pos)
 
         # print('########## ' + station + ' ##########')
         # print('TOTAL ROWS: {}\n'.format(len(df)))

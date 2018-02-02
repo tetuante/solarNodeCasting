@@ -109,5 +109,6 @@
         }
     },
     "aggregation": "skip",
-    "relative": true
+    "relative": true,
+    "decimal_pos": 5
 }
