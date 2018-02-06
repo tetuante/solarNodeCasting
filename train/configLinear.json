@@ -1,0 +1,39 @@
+{
+    "normalized_csv_paths": [
+        "data/20110401_matrix.csv",
+        "data/20110402_matrix.csv",
+        "data/20110403_matrix.csv",
+        "data/20110404_matrix.csv",
+        "data/20110405_matrix.csv",
+        "data/20110406_matrix.csv",
+        "data/20110407_matrix.csv",
+        "data/20110408_matrix.csv",
+        "data/20110409_matrix.csv"
+    ],
+    "results_destination_folder": "data/grid_search_results",
+    "training_sets_config": {
+        "destination_folder": "data/xy",
+        "n_samples": [1],
+        "target_distances": [0],
+        "original_prefix_column_names": [],
+        "original_column_names": ["ap1_rel_ns0", "ap1_rel_ns1", "ap1_rel_ns2", "ap1_rel_ns3", "ap3_rel_ns0", "ap3_rel_ns1", "ap3_rel_ns2", "ap3_rel_ns3", "ap4_rel_ns0", "ap4_rel_ns1", "ap4_rel_ns2", "ap4_rel_ns3", "ap5_rel_ns0", "ap5_rel_ns1", "ap5_rel_ns2", "ap5_rel_ns3", "ap6_rel_ns0", "ap6_rel_ns1", "ap6_rel_ns2", "ap6_rel_ns3", "ap7_rel_ns0", "ap7_rel_ns1", "ap7_rel_ns2", "ap7_rel_ns3", "dh1_rel_ns0", "dh1_rel_ns1", "dh1_rel_ns2", "dh1_rel_ns3", "dh2_rel_ns0", "dh2_rel_ns1", "dh2_rel_ns2", "dh2_rel_ns3", "dh3_rel_ns0", "dh3_rel_ns1", "dh3_rel_ns2", "dh3_rel_ns3", "dh4_rel_ns0", "dh4_rel_ns1", "dh4_rel_ns2", "dh4_rel_ns3", "dh5_rel_ns0", "dh5_rel_ns1", "dh5_rel_ns2", "dh5_rel_ns3", "dh6_rel_ns0", "dh6_rel_ns1", "dh6_rel_ns2", "dh6_rel_ns3", "dh7_rel_ns0", "dh7_rel_ns1", "dh7_rel_ns2", "dh7_rel_ns3", "dh8_rel_ns0", "dh8_rel_ns1", "dh8_rel_ns2", "dh8_rel_ns3", "dh9_rel_ns0", "dh9_rel_ns1", "dh9_rel_ns2", "dh9_rel_ns3", "dh10_rel_ns0", "dh10_rel_ns1", "dh10_rel_ns2", "dh10_rel_ns3", "dh11_rel_ns0", "dh11_rel_ns1", "dh11_rel_ns2", "dh11_rel_ns3", "az", "el", "ap1_rel_target"],
+        "x_prefix_column_names": [],
+        "x_column_names": ["ap1_rel_ns0", "ap1_rel_ns1", "ap1_rel_ns2", "ap1_rel_ns3", "ap3_rel_ns0", "ap3_rel_ns1", "ap3_rel_ns2", "ap3_rel_ns3", "ap4_rel_ns0", "ap4_rel_ns1", "ap4_rel_ns2", "ap4_rel_ns3", "ap5_rel_ns0", "ap5_rel_ns1", "ap5_rel_ns2", "ap5_rel_ns3", "ap6_rel_ns0", "ap6_rel_ns1", "ap6_rel_ns2", "ap6_rel_ns3", "ap7_rel_ns0", "ap7_rel_ns1", "ap7_rel_ns2", "ap7_rel_ns3", "dh1_rel_ns0", "dh1_rel_ns1", "dh1_rel_ns2", "dh1_rel_ns3", "dh2_rel_ns0", "dh2_rel_ns1", "dh2_rel_ns2", "dh2_rel_ns3", "dh3_rel_ns0", "dh3_rel_ns1", "dh3_rel_ns2", "dh3_rel_ns3", "dh4_rel_ns0", "dh4_rel_ns1", "dh4_rel_ns2", "dh4_rel_ns3", "dh5_rel_ns0", "dh5_rel_ns1", "dh5_rel_ns2", "dh5_rel_ns3", "dh6_rel_ns0", "dh6_rel_ns1", "dh6_rel_ns2", "dh6_rel_ns3", "dh7_rel_ns0", "dh7_rel_ns1", "dh7_rel_ns2", "dh7_rel_ns3", "dh8_rel_ns0", "dh8_rel_ns1", "dh8_rel_ns2", "dh8_rel_ns3", "dh9_rel_ns0", "dh9_rel_ns1", "dh9_rel_ns2", "dh9_rel_ns3", "dh10_rel_ns0", "dh10_rel_ns1", "dh10_rel_ns2", "dh10_rel_ns3", "dh11_rel_ns0", "dh11_rel_ns1", "dh11_rel_ns2", "dh11_rel_ns3", "az", "el"],
+        "y_colum_names": ["ap1_rel_target"],
+        "original_y_column_name": ["ap1_rel_target"]
+    },
+    "estimator_configs": [
+	{
+        "module": "sklearn.linear_model",
+        "class": "linear_model",
+        "model": "LinearRegression",
+        "scoring": "r2",
+        "map": "regression",
+        "parameters": [{
+			"fit_intercept": [true, false],
+            "normalize": [true, false],
+            "copy_X": [true]
+        }]
+    }
+	]
+}

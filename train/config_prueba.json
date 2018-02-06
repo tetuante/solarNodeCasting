@@ -1,0 +1,30 @@
+{
+    "normalized_csv_paths": [
+        "data/after_20170727.csv"
+    ],
+    "results_destination_folder": "data/grid_search_results",
+    "training_sets_config": {
+        "destination_folder": "data/xy",
+        "n_samples": [1, 2, 3, 4, 5],
+        "target_distances": [0],
+        "original_prefix_column_names": [],
+        "original_column_names": ["azimuth", "elevation", "temperature",  "humidity", "vPanel", "vPyra"],
+        "x_prefix_column_names": [],
+        "x_column_names": ["azimuth", "elevation", "temperature",  "humidity", "vPanel"],
+        "y_colum_names": ["vPyra"],
+        "original_y_column_name": ["vPyra"]
+    },
+    "estimator_configs": [
+		{
+		    "module": "sklearn.svm",
+		    "class": "svm",
+		    "model": "SVR",
+		    "scoring": "r2",
+		    "map": "regression",
+		    "parameters": [{
+				"C": [1.0],
+				"kernel": ["linear"]
+		    }]
+		}
+	]
+}
