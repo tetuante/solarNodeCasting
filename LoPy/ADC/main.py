@@ -8,7 +8,7 @@ adc = ADC()
 Connects the internal 1.1v to external GPIO. It can only be connected to P22, P21 or P6.
 It is recommended to only use P6 on the WiPy, on other modules this pin is connected to the radio.
 '''
-# adc.vref_to_pin('P22')
+adc.vref_to_pin('P21')
 
 '''
 If called without any arguments, this function returns the current calibrated voltage (in millivolts) of the 1.1v reference.
@@ -16,7 +16,7 @@ Otherwise it will update the calibrated value (in millivolts) of the internal 1.
 
 Use the ADC.vref_to_pin(*,pin) method and a voltmeter to find out the actual Vref.
 '''
-adc.vref(1059)
+adc.vref(1058)
 
 apin = adc.channel(pin='G5', attn = ADC.ATTN_11DB)
 
