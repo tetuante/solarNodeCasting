@@ -3,8 +3,24 @@
 import os
 import pandas as pd
 import json
+import optparse
+import sys
 
-with open('config.json', 'r') as cfg_file:
+def addOptions(parser):
+   parser.add_option("--configFile", default="",
+             help="Config json file for the data to pass to the model")
+
+parser = optparse.OptionParser()
+addOptions(parser)
+
+(options, args) = parser.parse_args()
+
+if not options.configFile:
+   print >> sys.stderr, "No configuration file specified\n"
+   sys.exit(1)
+
+#with open('config.json', 'r') as cfg_file:
+with open(options.configFile, 'r') as cfg_file:
     cfg_data = json.load(cfg_file)
 
 target_station = cfg_data['target_station']
@@ -33,8 +49,9 @@ if not os.path.exists(dest_folder):
     os.makedirs(dest_folder)
 
 # Copy config.json to output directory
-with open('config.json', 'r') as cfg_file:
-    with open(dest_folder + 'config.json', 'w') as f:
+#with open('config.json', 'r') as cfg_file:
+with open(options.configFile, 'r') as cfg_file:
+    with open(dest_folder + options.configFile, 'w') as f:
         f.write(cfg_file.read())
 
 # Get dates that are available for all stations
@@ -75,10 +92,14 @@ for date in dates:
 
     # print('FIRST PREDICTION: {}\nLAST PREDICTION: {}\nROWS: {}\n'.format(y.first_valid_index(), y.last_valid_index(), len(y)))
 
+    max_dist = 0 #maximum time from nsamples and offset
+
     for station in stations:
         nsamples = params[station]['nsamples']
         offset = params[station]['offset']
         df = pd.read_csv(orig_folder + station + '/' + date + '_' + station + '.csv').round(decimal_pos)
+        if max_dist < (nsamples + offset):
+            max_dist = nsamples + offset
 
         # print('########## ' + station + ' ##########')
         # print('TOTAL ROWS: {}\n'.format(len(df)))
@@ -87,8 +108,9 @@ for date in dates:
             dist = (ns + offset + 1) * time_granularity
             first_sample = first_prediction - dist
             last_sample = last_prediction - dist
-            # We will skip intermediate samples for now
-            _x = df[first_sample:last_sample + time_granularity:time_granularity]
+            if aggregation == 'skip':#TODO for having other processing methods like average selected in the config file
+               # We will skip intermediate samples for now
+               _x = df[first_sample:last_sample + time_granularity:time_granularity]
             # print('FIRST SAMPLE: {}\nLAST SAMPLE: {}\nROWS: {}\n'.format(_x.first_valid_index(), _x.last_valid_index(), len(_x)))
             # Rename column to include ghi/rel and ns
             col_name = station + rad_col + '_ns' + str(ns)
@@ -103,4 +125,4 @@ for date in dates:
     matrix = pd.concat([x,y[['az', 'el', col_name]].reset_index(drop=True)], axis=1)
 
     #WARNING: this will overwrite any existing CSV file with the same path and name
-    matrix.to_csv(dest_folder + date + '_' + dest_file_suffix, header=True, index=False)
+    matrix.to_csv(dest_folder + '_' + target_station + '_' + date + '_' + time_granularity + '_' + max_dist + '_'  + aggregation + '_' + dest_file_suffix, header=True, index=False)
