@@ -7,10 +7,25 @@ import numpy as np
 import json
 import os
 import sys
+import optparse
 
+def addOptions(parser):
+   parser.add_option("--configFile", default="",
+             help="Config json file for the data to pass to the model")
 
-with open('scores.json', 'r') as cfg_file:
+parser = optparse.OptionParser()
+addOptions(parser)
+
+(options, args) = parser.parse_args()
+
+if not options.configFile:
+   print >> sys.stderr, "No configuration file specified\n"
+   sys.exit(1)
+
+#with open('config.json', 'r') as cfg_file:
+with open(options.configFile, 'r') as cfg_file:
     cfg_data = json.load(cfg_file)
+
 
 orig_folder = cfg_data['orig_folder']
 dest_folder = cfg_data['dest_folder']
