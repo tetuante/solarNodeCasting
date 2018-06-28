@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 
+
+#This file takes the raw data and creates new .csv's with relative radiation for individual stations
+
+#This file uses the Page Clear Sky Model but not the Pysolar one as it contains some mistakes
+
 import pandas as pd
 import json
 import os
-from pysolar.solar import *
+import pysolar.util as util_csm
+import pysolar.solar as solar
+import pysolar.radiation as radiation
+import math
 import sys
 
 with open('config.json', 'r') as cfg_file:
@@ -32,8 +40,19 @@ for station in stations:
 initial_hour = 730
 final_hour = 1729
 
+#Some parameters:
+tem = 26.8           #Mean temperature in Hawaii in solar hours
+pres = 1016.4        #Mean pressure in Hawaii in solar hours
+AM = 2.0             # Default air mass is 2.0
+TL = 1.0             # Default Linke turbidity factor is 1.0
+SC = 1367.0          # Solar constant in W/m^2 is 1367.0. Note that this value could vary by +/-4 W/m^2
+TY = 365             # Total year number from 1 to 365 days
+elevation_default = 0.0      # Default elevation is 0.0
+
+
+
 input_folder = 'input'
-output_folder = 'output'
+output_folder = 'ghi_output'
 
 input_files = os.listdir('input')
 nfiles = len(input_files)
@@ -57,7 +76,8 @@ for input_file in input_files:
     # Take daylight data
     df = df[(df.hst >= initial_hour) & (df.hst <= final_hour)]
 
-    # Validate data: we will skip this input_file if it contains negative data
+    # Validate data: we will skip this input_file if it contains negative data or
+    # if any measurement is missing
     if False in (df[stations] > 0.0).values:
         print('Negative values were found... We will skip this day')
         ninvalid += 1
@@ -65,12 +85,13 @@ for input_file in input_files:
 
     if valid:
         print('Data seem valid!')
-        # Split data by date and station and add sun position, GHI and GHI/clear-sky ratio
+        # Split data by date and station and add clear-sky radiation and radiation/clear-sky ratio
         for station in stations:
             print('    [{}/{}] Processing station {}...'.format(stations.index(station)+1, nstations, station))
             lat = cfg_data['params'][station]['latitude']
             lon = cfg_data['params'][station]['longitude']
-
+            
+            DOY = df.doy[0]
             # Take data corresponding to this station and reset the index
             sta_df = df[t_columns + [station]].reset_index(drop=True)
 
@@ -83,15 +104,34 @@ for input_file in input_files:
             el_df = pd.DataFrame()
             cs_df = pd.DataFrame()
             for datetime in dt_df:
-                az_df = az_df.append({'az': get_azimuth(lat, lon, datetime)}, ignore_index=True)
-                elevation = get_altitude(lat, lon, datetime)
-                el_df = el_df.append({'el': elevation}, ignore_index=True)
-                cs_df = cs_df.append({'cs': radiation.get_radiation_direct(datetime, elevation)}, ignore_index=True)
+                KD = util_csm.mean_earth_sun_distance(datetime)
+                DEC = util_csm.declination_degree(datetime,TY)
+                altitude = solar.get_altitude(lat,lon, datetime)
+                
+                #FSOLALT (Page model):
+                FSOLALT = 0.038175 + 1.5458 * math.sin(math.radians(altitude)) - 0.5998 * math.sin(math.radians(altitude)) ** 2
+
+                #Diffuse Transmitance:
+                DT = ((-21.657) + (41.752 * (TL)) + (0.51905 * (TL) * (TL)))
+
+                #Optical Depth:
+                OD = radiation.get_optical_depth(DOY)
+                
+                #Direct Irradiation under clear: DIRC:
+                DIRC = SC * KD * math.exp(-0.8662 * AM * TL * OD) * math.sin(math.radians(altitude))
+
+                #Diffuse Irradiation under clear sky: DIFFC:
+              
+                DIFFC = KD * DT * FSOLALT
+                #Same thing as in DIRC, maybe the reference of the altitude has a phase shift
+                ghi_csm = abs (DIRC) + abs(DIFFC)
+                
+                cs_df = cs_df.append({'cs': ghi_csm}, ignore_index=True)
 
             sta_df = sta_df[station]
 
-            sta_df = pd.concat([dt_df, az_df, el_df, sta_df, sta_df/cs_df['cs']], axis=1)
-            sta_df.columns = ['hst datetime', 'az', 'el', station + '_ghi', station + '_rel']
+            sta_df = pd.concat([dt_df, sta_df, sta_df/cs_df['cs']], axis=1)
+            sta_df.columns = ['hst datetime', station + '_ghi', station + '_rel']
 
             output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
             print('        Writing ' + output_path + '...')
