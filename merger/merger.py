@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 #This file takes the raw data and creates new .csv's with relative radiation for individual stations
 
 #This file uses the Page Clear Sky Model but not the Pysolar one as it contains some mistakes
