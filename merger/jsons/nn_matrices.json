@@ -1,0 +1,8 @@
+{
+    "orig_folder": "../experimentos/exp_dh3_5s_1min_horizon_mean",
+    "der_folder": "../experimentos/exp_dh3_5s_1min_horizon_mean/derivative",
+    "dest_folder": "../experimentos/exp_dh3_5s_good_days",
+    "scores_file": "ghi_output/dh3/scores/scores_dh3.csv",
+    "scores_threshold": 0.5,
+    "derivative": 1
+}
