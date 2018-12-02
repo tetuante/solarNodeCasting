@@ -7,25 +7,10 @@ import numpy as np
 import json
 import os
 import sys
-import optparse
 
-def addOptions(parser):
-   parser.add_option("--configFile", default="",
-             help="Config json file for the data to pass to the model")
 
-parser = optparse.OptionParser()
-addOptions(parser)
-
-(options, args) = parser.parse_args()
-
-if not options.configFile:
-   print >> sys.stderr, "No configuration file specified\n"
-   sys.exit(1)
-
-#with open('config.json', 'r') as cfg_file:
-with open(options.configFile, 'r') as cfg_file:
+with open('scores.json', 'r') as cfg_file:
     cfg_data = json.load(cfg_file)
-
 
 orig_folder = cfg_data['orig_folder']
 dest_folder = cfg_data['dest_folder']
@@ -39,8 +24,15 @@ stations = cfg_data['stations']
 for station in stations:
     #curr_path = orig_path + orig_folder + '/' + station
     curr_path = orig_folder + '/' + station
-    input_files = os.listdir(curr_path)
-
+    input_files = []
+    in_files = os.listdir(curr_path)
+    for f in in_files:
+        if f.endswith('.csv'):
+            input_files.append(f)
+    out_folder = curr_path + '/' + dest_folder
+    if not os.path.exists(out_folder):
+        print('Creating folder ' + out_folder  + '\n')
+        os.makedirs(out_folder)
     scores = pd.DataFrame()
     #date_df = pd.DataFrame()
 
@@ -54,6 +46,7 @@ for station in stations:
         score_2 = 0
         score_3 = 0
         score_4 = 0
+        score_5 = 0
         #SCORE 1:
         ghi_max = ghi_rel.max()
         if ghi_max > 1:
@@ -83,6 +76,12 @@ for station in stations:
             if ghi_rel[i] < threshold_3:
                 score_4 += 1
 
+        #SCORE 5: ("derivative")
+        ghi_rel_der = ghi_rel.diff().round(5)
+        ghi_rel_der.iloc[0] = 0
+        for i in range(len(ghi_rel_der)):
+            score_5 = ghi_rel_der.abs().mean()
+
 
         score_1 = score_1 / len(ghi_rel)
         score_2 = score_2 / len(ghi_rel)
@@ -91,7 +90,7 @@ for station in stations:
 
 
         #date_df = pd.to_datetime(date, format='%Y%m%d')
-        scores = scores.append({"date":date,"score_1":score_1,"score_threshold_"+str(threshold_1):score_2,"score_threshold_"+str(threshold_2):score_3,"score_threshold_"+str(threshold_3):score_4},ignore_index=True)
+        scores = scores.append({"date":date,"score_1":score_1,"score_threshold_"+str(threshold_1):score_2,"score_threshold_"+str(threshold_2):score_3,"score_threshold_"+str(threshold_3):score_4,"score_derivative":score_5},ignore_index=True)
 
-    scores.to_csv(curr_path + '/' + 'scores_' + station + '.csv', header=True, index=False)
+    scores.to_csv(out_folder + 'scores_' + station + '.csv', header=True, index=False)
     print("Finished station " + station )
