@@ -1,0 +1,8 @@
+{
+    "orig_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/train_validation/results_NN_300_300_300_seed_1/csvs",
+    "out_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/train_validation/results_NN_300_300_300_seed_1/graphs",
+    "nn_type": "3 layers with 300-300-300 neurons"
+
+
+
+}

@@ -1,0 +1,7 @@
+{
+	"stations": "all",
+	"linreg_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/train_validation/LinReg_seed_1/importances/",
+        "rf_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/train_validation/random_forest_seed1/importances/",
+        "out_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/train_validation/best_worst_features/",
+	"num_features": 5
+}

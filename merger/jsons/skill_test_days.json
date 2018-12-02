@@ -1,0 +1,7 @@
+{
+    "orig_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/test/test_results/graphs_skills_test_axis/",
+    "out_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/test/test_results/",
+    "nn_type": "3 layers with 300-300-300 neurons"
+
+
+}

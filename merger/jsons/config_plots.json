@@ -1,0 +1,7 @@
+{
+	"stations": ["dh1","ap1","ap3","ap4","ap5","ap6","ap7","dh2","dh3","dh4","dh5","dh6","dh7","dh8","dh9","dh10","dh11"],
+	"orig_folder": "ghi_output_haurwitz/",
+	"dest_folder": "/plots/",
+	"dest_file": "ghi_rel.png",
+	"time_granularity": 1
+}

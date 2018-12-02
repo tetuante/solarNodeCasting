@@ -1,0 +1,20 @@
+{
+    "orig_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/test",
+    "model_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/train_validation/results_NN_300_300_300_seed_1/models",
+    "days_info": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/days_info.csv",
+    "test_days_file": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/test_days.csv",
+    "single_day": "ghi_output_haurwitz/ap1/20100318_ap1.csv",
+    "hor_pred": ["10s","30s","1min","90s","2min","150s","3min","4min","5min","6min","7min","8min","9min","10min","15min"],
+    "dest_folder": "/test_results/graphs_skills_test_axis",
+    "features": [["all"]],
+    "train_size": [1],
+    "hls": [300, 300, 300],
+    "alpha": [0.0001],
+    "testing_days": "all",
+    "time_granularity":10,
+    "target_station": "dh6",
+    "seed": 20
+
+
+
+}

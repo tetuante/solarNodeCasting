@@ -1,0 +1,10 @@
+{
+    "orig_folder": "../experimentos/exp_dh3_5s_good_days/train_validation",
+    "model_folder": "../experimentos/exp_dh3_5s_good_days/train_validation/trained_models_and_graphs/20180616_testings/models",
+    "hor_pred": ["10min"],
+    "dest_folder": "/results/random_forest_10min/graphs",
+    "features":  [["all"]],
+    "train_size": [0.7],
+    "depth": 0,
+    "testing_days": 10
+}

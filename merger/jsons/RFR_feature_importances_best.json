@@ -1,0 +1,5 @@
+{
+    "matrix_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/test",
+    "model_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/train_validation/random_forest_seed1/models/",
+    "dest_folder": "../experimentos/paper/filtered_0.35_matrices/train_validation_best/train_validation/random_forest_seed1/importances/"
+}
