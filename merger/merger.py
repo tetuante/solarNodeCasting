@@ -2,7 +2,6 @@
 
 #This file takes the raw data and creates new .csv's with relative radiation for individual stations
 
-#This file uses the Page Clear Sky Model but not the Pysolar one as it contains some mistakes
 
 import pandas as pd
 import json
@@ -13,7 +12,20 @@ import pysolar.radiation as radiation
 import math
 import sys
 
-with open('config.json', 'r') as cfg_file:
+def addOptions(parser):
+   parser.add_option("--config", default="",
+             help="Config json file for the data to pass to the model")
+
+parser = optparse.OptionParser()
+addOptions(parser)
+
+(options, args) = parser.parse_args()
+
+if not options.config:
+   print >> sys.stderr, "No configuration file specified\n"
+   sys.exit(1)
+
+with open(options.config, 'r') as cfg_file:
     cfg_data = json.load(cfg_file)
 
 t_columns = ['s', 'y', 'doy', 'hst']
@@ -35,25 +47,16 @@ for station in stations:
     if station not in sta_columns:
         raise NameError('Invalid station. Valid stations are:\n' + str(sta_columns))
 
-# Only consider data between 07:30 and 17:30 (HST)
-initial_hour = 730
-final_hour = 1729
+# Ideally only consider data between 07:30 and 17:29 (HST) to get always sunlight
+initial_hour = cfg_data['initial_hour']
+final_hour = cfg_data['final_hour']
 
-#Some parameters:
-tem = 26.8           #Mean temperature in Hawaii in solar hours
-pres = 1016.4        #Mean pressure in Hawaii in solar hours
-AM = 2.0             # Default air mass is 2.0
-TL = 1.0             # Default Linke turbidity factor is 1.0
-SC = 1367.0          # Solar constant in W/m^2 is 1367.0. Note that this value could vary by +/-4 W/m^2
-TY = 365             # Total year number from 1 to 365 days
-elevation_default = 0.0      # Default elevation is 0.0
+simple_csm = cfg_data['csm']
 
+input_folder = cfg_data['orig_folder']
+output_folder = cfg_data['dest_folder'] + '_' + simple_csm
 
-
-input_folder = 'input'
-output_folder = 'ghi_output'
-
-input_files = os.listdir('input')
+input_files = os.listdir(input_folder)
 nfiles = len(input_files)
 
 # Create output directory if it doesn't exist
@@ -90,9 +93,9 @@ for input_file in input_files:
             lat = cfg_data['params'][station]['latitude']
             lon = cfg_data['params'][station]['longitude']
             
-            DOY = df.doy[0]
             # Take data corresponding to this station and reset the index
             sta_df = df[t_columns + [station]].reset_index(drop=True)
+            DOY = sta_df.doy[0]
 
             # Convert time related columns to datetimes and store them in a new dataframe
             dt_df = pd.to_datetime(sta_df.s.apply(str) + ' ' + sta_df.y.apply(str) + ' ' + sta_df.doy.apply(str) + ' ' + sta_df.hst.apply(str), format='%S %Y %j %H%M')
@@ -105,34 +108,24 @@ for input_file in input_files:
             for datetime in dt_df:
                 KD = util_csm.mean_earth_sun_distance(datetime)
                 DEC = util_csm.declination_degree(datetime,TY)
-                altitude = solar.get_altitude(lat,lon, datetime)
-                
-                #FSOLALT (Page model):
-                FSOLALT = 0.038175 + 1.5458 * math.sin(math.radians(altitude)) - 0.5998 * math.sin(math.radians(altitude)) ** 2
+                altitude = solar.get_altitude(lat,lon,datetime)
+                azimuth = solar.get_azimuth(lat,lon,datetime)
 
-                #Diffuse Transmitance:
-                DT = ((-21.657) + (41.752 * (TL)) + (0.51905 * (TL) * (TL)))
-
-                #Optical Depth:
-                OD = radiation.get_optical_depth(DOY)
-                
-                #Direct Irradiation under clear: DIRC:
-                DIRC = SC * KD * math.exp(-0.8662 * AM * TL * OD) * math.sin(math.radians(altitude))
-
-                #Diffuse Irradiation under clear sky: DIFFC:
-              
-                DIFFC = KD * DT * FSOLALT
-                #Same thing as in DIRC, maybe the reference of the altitude has a phase shift
-                ghi_csm = abs (DIRC) + abs(DIFFC)
+                if simple_csm == 'kasten':
+                    ghi_csm = 910 * math.sin(math.radians(altitude))
+                if simple_csm == 'haurwitz':
+                    ghi_csm = 1098 * math.sin(math.radians(altitude)) * math.exp(-0.057 / (math.sin(math.radians(altitude))))
                 
                 cs_df = cs_df.append({'cs': ghi_csm}, ignore_index=True)
+                el_df = el_df.append({'elevation':altitude}, ignore_index=True)
+                az_df = az_df.append({'azimuth': azimuth}, ignore_index=True)
 
             sta_df = sta_df[station]
 
-            sta_df = pd.concat([dt_df, sta_df, sta_df/cs_df['cs']], axis=1)
-            sta_df.columns = ['hst datetime', station + '_ghi', station + '_rel']
+            sta_df = pd.concat([dt_df, sta_df, el_df, az_df, sta_df/cs_df['cs']], axis=1)
+            sta_df.columns = ['hst datetime', station + '_ghi', 'elevation', 'azimuth', station + '_rel']
 
-            output_path = output_folder + '/' + station + '/' + date + '_' + station + '.csv'
+            output_path = folder + '/' + date + '_' + station + '.csv'
             print('        Writing ' + output_path + '...')
             sta_df.to_csv(output_path,header=True,index=False)
 
