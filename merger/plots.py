@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-#This file plots the relative GHI for every day and add our 4 different scores to it
+#This file plots the relative GHI for every day and add our 5 different scores to it
 
 import numpy as np
 import pandas as pd
@@ -54,6 +54,8 @@ for station in stations:
     score_2 = scores[scores.columns[2]]
     score_3 = scores[scores.columns[3]]
     score_4 = scores[scores.columns[4]]
+    score_5 = scores[scores.columns[4]]
+
 
 
     if not os.path.exists(curr_path + dest_folder):
@@ -83,9 +85,10 @@ for station in stations:
         dates = x[x.columns[0]].str[0:19] #Date and time
         times = pd.to_datetime(dates.values, format = '%Y-%m-%d %H:%M:%S') #In datetime format
         sc1 = str(round(score_1[score_index],4))
-        sc2 = str(round(1 - score_2[score_index],4))
-        sc3 = str(round(1 - score_3[score_index],4))
-        sc4 = str(round(1 - score_4[score_index],4))
+        sc2 = str(round(score_2[score_index],4))
+        sc3 = str(round(score_3[score_index],4))
+        sc4 = str(round(score_4[score_index],4))
+        sc5 = str(round(score_5[score_index],4))
 
 
 	#PLOT
@@ -102,7 +105,8 @@ for station in stations:
         sctxt2 = score_names[2] + ': ' + sc2 + '\n'
         sctxt3 = score_names[3] + ': ' + sc3 + '\n'
         sctxt4 = score_names[4] + ': ' + sc4 + '\n'
-        sctxt = sctxt1+sctxt2+sctxt3+sctxt4
+        sctxt5 = score_names[5] + ': ' + sc5 + '\n'
+        sctxt = sctxt1+sctxt2+sctxt3+sctxt4+sctxt5
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         ax.text(0.7,1.1,sctxt,transform=plt.gcf().transFigure,fontsize=10,verticalalignment='top',bbox=props)
         plt.title(plot_title,loc='left')
