@@ -34,6 +34,7 @@ dest_folder = cfg_data['dest_folder']
 der_folder = cfg_data['der_folder']
 derivative = cfg_data['derivative']
 scores_file = cfg_data['scores_file']
+score_to_use = cfg_data['score_to_use']
 scores_threshold = cfg_data['scores_threshold'] #we set 25% as our default threshold and get the score for it
 
 
@@ -43,20 +44,20 @@ in_files = os.listdir(orig_folder)
 for input_file in in_files:
     if input_file.endswith('.csv'):
         input_files.append(input_file)
-
+print('len input files: {}\n.'.format(len(input_files)))
 #We remove the vulcan activity &/or weird days:
 
 scores = pd.read_csv(scores_file)
 
-scores_days = scores[scores.columns[0]]
-scores_25 = scores[scores.columns[2]]
+scores_days = scores['date']
+scores_thr = scores[score_to_use]
 #Now we get... 
-scores_25_index = scores_25.index.values
-days_25 = scores_25_index[scores_25 > scores_threshold]
+scores_thr_index = scores_thr.index.values
+days_thr = scores_thr_index[scores_thr > scores_threshold]
 
 #And then we end up with a list of days (int)
 
-bad_days = scores_days[days_25]
+bad_days = scores_days[days_thr]
 days_list = [] #in str
 for i in bad_days:
     days_list.append(str(i))
@@ -69,6 +70,7 @@ for d in days_list:
 
 
 lenfiles = len(input_files)
+print('lenfiles: {}\n'.format(lenfiles))
 input_der_files = []
 if derivative == True:
     print('derivative TRUE\n')
@@ -107,7 +109,8 @@ arr_rand_test = arr_days[0:lenfiles_test]
 lenfiles_train = lenfiles - lenfiles_test
 arr_rand_train = arr_days[lenfiles_test:]
 
-
+day0 = pd.read_csv(orig_folder + '/' + input_files[0])
+lenday = len(day0)
 
 input_files_test = []
 input_files_train = []
@@ -118,11 +121,31 @@ for i in arr_rand_test:
 for i in arr_rand_train:
     input_files_train.append(input_files[i])
 
+
+#Normalization for azimut and elevation here. Should've been done before, right... TO DO
+#Initialization first...
+az_max = -999
+az_min = 999
+ele_max = -999
+ele_min = 999
+#Then we calculate the max and mins and update it. We normalize after the matrices are built, in the last part of the code.
+
 print('Appending {} test files\n'.format(lenfiles_test))
 start_time = time.time()
 for f in input_files_test:
     df = pd.read_csv(orig_folder + '/' + f)
     x = df[df.columns[0:-1]].round(5)
+    #Here's the calculation for the normalization...
+    if x.azimut.max() > az_max:
+        az_max = x.azimut.max()
+    if x.azimut.min() < az_min:
+        az_min = x.azimut.min()
+    if x.elevation.max() > ele_max:
+        ele_max = x.elevation.max()
+    if x.elevation.min() < ele_min:
+        ele_min = x.elevation.min()
+    #...And here it ends.
+
     y = df[df.columns[-1]].round(5)
     if derivative == True:
         f_der = f.replace('.csv','_der.csv')
@@ -145,6 +168,17 @@ start_time = time.time()
 for f in input_files_train:
     df = pd.read_csv(orig_folder + '/' + f)
     x = df[df.columns[0:-1]].round(5)
+    #Here's the calculation for the normalization...
+    if x.azimut.max() > az_max:
+        az_max = x.azimut.max()
+    if x.azimut.min() < az_min:
+        az_min = x.azimut.min()
+    if x.elevation.max() > ele_max:
+        ele_max = x.elevation.max()
+    if x.elevation.min() < ele_min:
+        ele_min = x.elevation.min()
+    #...And here it ends.
+ 
     y = df[df.columns[-1]].round(5)
     if derivative == True:
         f_der = f.replace('.csv','_der.csv')
@@ -157,6 +191,37 @@ for f in input_files_train:
 
 X.to_csv(tv+'/X_tr_val.csv',header=True,index=False)
 Y.to_csv(tv+'/Y_tr_val.csv',header=True,index=False)
+days_info = {'length_day':[lenday],'number_days':[lenfiles],'number_test_days':[lenfiles_test],'number_train_days':[lenfiles_train],'seed_used':[ran_seed]}
+days_info_csv=pd.DataFrame(days_info)
+days_info_csv.to_csv(dest_folder+'/days_info.csv',header=True,index=False)
+
+days_csv = pd.DataFrame({'total_days':input_files})
+days_csv.to_csv(dest_folder+'/total_days.csv',header=True,index=False)
+
+days_test_csv = pd.DataFrame({'test_days':input_files_test})
+days_test_csv.to_csv(dest_folder+'/test_days.csv',header=True,index=False)
+
+days_train_csv=pd.DataFrame({'train_days':input_files_train})
+days_train_csv.to_csv(dest_folder+'/train_days.csv',header=True,index=False)
+
+thresholds_csv = pd.DataFrame({'score':[score_to_use],'threshold':[scores_threshold]})
+thresholds_csv.to_csv(dest_folder+'/threshold_info.csv',header=True,index=False)
 
 end_time = time.time()
 print('{} files appended in {} seconds. Splitting matrices.\n'.format(lenfiles_train,end_time-start_time))
+
+
+#And now we DO normalize. This is far from optimal since we load what we just saved and closed...
+
+az_range = az_max - az_min
+ele_range = ele_max - ele_min
+
+X_test = pd.read_csv(test+'/X_test.csv')
+X_test.elevation = ((X_test.elevation - ele_min) / ele_range).round(5)
+X_test.azimut = ((X_test.azimut - az_min) / az_range).round(5)
+X_test.to_csv(test+'/X_test.csv',header=True,index=False)
+
+X_train = pd.read_csv(tv+'/X_tr_val.csv')
+X_train.elevation = ((X_train.elevation - ele_min) / ele_range).round(5)
+X_train.azimut = ((X_train.azimut - az_min) / az_range).round(5)
+X_train.to_csv(tv+'/X_tr_val.csv',header=True,index=False)
