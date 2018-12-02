@@ -4,7 +4,6 @@ import json
 import numpy as np
 import pandas as pd
 import matplotlib
-#Some computers have a problem with pyplot and TKinter. This workaround solves it.
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
@@ -24,6 +23,8 @@ lon_min = math.radians(lon.min())
 lon_max = math.radians(lon.max())
 lat_min = math.radians(lat.min())
 lat_max = math.radians(lat.max())
+
+nticks = 10
 
 lat_rad = []
 lon_rad = []
@@ -47,9 +48,8 @@ for key, row in stations.iterrows():
     ax.annotate(row['Station'],xy=(row['Longitude'], row['Latitude']))
 
 plt.title('Oahu Solar Measurement Grid Stations.\nDistance in meters.')
-
-ax.set_xlabel("West                                                      East")
-ax.set_ylabel("South                                                     North")
+#ax.set_xlabel("West                                                      East")
+#ax.set_ylabel("South                                                     North")
 
 #Let's set a small value to fit the data in the X&Y axes without fitting it too much (20 is an arbitrary value)
 
@@ -59,23 +59,26 @@ y_ax_fit = abs(lat.max() - lat.min()) / 20
 plt.xlim((lon.min() - x_ax_fit), (lon.max() + x_ax_fit))
 plt.ylim((lat.min() - y_ax_fit), (lat.max() + y_ax_fit))
 
-#Calculate distance in meters from the most southwestern point to the most northeastern in the east and north direction and the middle point
-lat_mid = (lat.min() + lat.max()) / 2
-lat_mid_rad = math.radians(lat_mid)
-lon_mid = (lon.min() + lon.max()) / 2
-lon_mid_rad = math.radians(lon_mid)
-xtick_locs = [lon.min(),lon_mid,lon.max()]
-ytick_locs = [lat.min(),lat_mid,lat.max()]
+
+latitudes = np.linspace(lat.min(),lat.max(),nticks)
+longitudes = np.linspace(lon.min(),lon.max(),nticks)
 R = 6371000
-x_dist_0 = int(R * math.sqrt((math.cos((lat_min + lat_min)/2) * (lon_mid_rad - lon_min)) **2))
-x_dist_1 = int(R * math.sqrt((math.cos((lat_min + lat_min)/2) * (lon_max - lon_min)) **2))
-xtick_lbls = [0,x_dist_0,x_dist_1]
-y_dist_0 = int(R * (lat_mid_rad - lat_min))
-y_dist_1 = int(R * (lat_max - lat_min))
-ytick_lbls = [0,y_dist_0,y_dist_1]
+xdists=[]
+ydists=[]
+#Equirectangular aproximation: https://www.movable-type.co.uk/scripts/latlong.html
+#x and y refer to that approximation in this loop:
+for i in range(nticks):
+	x = math.radians(longitudes[i]-longitudes[0]) * math.cos((math.radians(latitudes[0]+latitudes[0]))/2)
+	d = int(R * abs(x))
+	xdists.append(d)
+for i in range(nticks):
+	y = math.radians(latitudes[i]-latitudes[0])
+	d = int(R * abs(y))
+	ydists.append(d)
 
 
-plt.xticks(xtick_locs,xtick_lbls)
-plt.yticks(ytick_locs,ytick_lbls)
 
-plt.savefig('stations_map2.png',bbox_inches = 'tight')
+plt.xticks(longitudes,xdists)
+plt.yticks(latitudes,ydists)
+plt.grid(which='both',linewidth=0.3)
+plt.savefig('stations_map.png',dpi=500,bbox_inches = 'tight')
