@@ -42,6 +42,12 @@ hor_pred = cfg_data['hor_pred'] #folder_names
 alpha_values = cfg_data['alpha'] #[0.0001, 0.001, 0.01, 0,1]
 feature_values = cfg_data['features'] #[['dh3'], ['dh3','dh4','dh5','dh10','ap1'], ['all']]
 hls = cfg_data['hls'] #we pass it as a list or int
+days_info_file = cfg_data['days_info']
+days_info = pd.read_csv(days_info_file)
+day_length = days_info['length_day'][0]
+days = days_info['number_train_days'][0]
+tg = cfg_data['time_granularity']
+seed = cfg_data['seed']
 
 if isinstance(hls,list):
     hls=tuple(hls)
@@ -78,16 +84,11 @@ print('Dataframes loaded in {} minutes {} seconds! Splitting for train and valid
 split_start = time.time()
 #We get the number of days and split for train and validation
 lenrow_original = len(x_original.values)
-#day_length = 7170 #36000/5(our time_granularity) = 7200 but we lose half a minute in the nts.py due to offset,nsamples, etc
 
-day_length=1200 #fou our 30 seconds time granularity
-
-days = int((lenrow_original / day_length))
 print('Days: {}\n'.format(days))
-print('Days(integer): {}\n'.format(int(days)))
 
 arr_days = np.arange(days)
-ran_seed = 42 #our seed to randomize data
+ran_seed = seed #our seed to randomize data
 np.random.seed(ran_seed)
 np.random.shuffle(arr_days)
 len_days_validation = int(round(days * 0.176470588,0))
@@ -100,11 +101,11 @@ y_train = pd.DataFrame()
 x_val_original = pd.DataFrame()
 y_val_original = pd.DataFrame()
 for day in days_train:
-    x_train = pd.concat([x_train,x_original.iloc[day:day+day_length]],ignore_index=True)
-    y_train = pd.concat([y_train,y_original.iloc[day:day+day_length]],ignore_index=True)
+    x_train = pd.concat([x_train,x_original.iloc[day*day_length:(day+1)*day_length]],ignore_index=True)
+    y_train = pd.concat([y_train,y_original.iloc[day*day_length:(day+1)*day_length]],ignore_index=True)
 for day in days_validation:
-    x_val_original = pd.concat([x_val_original,x_original.iloc[day:day+day_length]],ignore_index=True)
-    y_val_original = pd.concat([y_val_original,y_original.iloc[day:day+day_length]],ignore_index=True)
+    x_val_original = pd.concat([x_val_original,x_original.iloc[day*day_length:(day+1)*day_length]],ignore_index=True)
+    y_val_original = pd.concat([y_val_original,y_original.iloc[day*day_length:(day+1)*day_length]],ignore_index=True)
 
 lencol = len(x_train.columns) #number of columns for x
 lenrow = len(x_train.values)
@@ -112,47 +113,55 @@ split_end = time.time()
 split_time = split_end - split_start
 split_min = int(split_time / 60)
 split_sec = split_time % 60
-print('Splitting completed in {} minutes {} seconds. Length for train: {}\n'.format(split_min,split_sec,y_train))
+print('Splitting completed in {} minutes {} seconds. Length for train: {}\n'.format(split_min,split_sec,len(y_train)))
+
+forecast_prediction = []
+nrmse_t_final = []
+nrmse_v_final = []
+skill_t_final = []
+skill_v_final = []
 
 
 #Since we configured our matrices with an offset we have to adjust to "jump" to the sample we want to actually predict
 
 for hp in hor_pred:
-    hor_pred_indices = int(int(hp.replace('min','')) * 60 / 5) #amount of indices we'll move. 5 because it's our time granularity.
-
+    if hp.endswith("min"):
+        hor_pred_indices = int(int(hp.replace('min','')) * 60 / tg)
+    if hp.endswith("s"):
+        hor_pred_indices = int(int(hp.replace('s','')) / tg)
+    forecast_prediction.append(hp)
 
 #TRAIN SIZE:
 
     for ts in train_size:
 
-        seed=23 #we can change it if we want, just giving this value
         n_rows = int(lenrow*ts)
         print('Taking less samples for train size = {}. y length: {} \n'.format(ts,n_rows))
-        y = y_train.sample(n_rows,random_state=seed)
-        y_index = y.index.values
-        y_index_valid = y_index[(y_index % day_length) < (day_length - hor_pred_indices)] #so we don't get values for the previous or next day
-        y_indices_lost = len(y_index) - len(y_index)
-        print('Indices computed. {} indices lost \n.'.format(y_indices_lost))
+        y_t = y_train.sample(n_rows,random_state=seed)
+        y_t_index = y_t.index.values
+        y_t_index_valid = y_t_index[(y_t_index % day_length) < (day_length - hor_pred_indices)] #so we don't get values for the previous or next day
+        y_t_indices_lost = len(y_t_index) - len(y_t_index_valid)
+        print('Indices computed. {} indices lost \n.'.format(y_t_indices_lost))
         print('Building randomized y matrix with valid indices...\n')
-        y = np.ravel(y_original.iloc[y_index_valid + hor_pred_indices])
+        y_t = np.ravel(y_train.iloc[y_t_index_valid + hor_pred_indices])
         print('Building y matrix removing invalid indices for persistence model...\n')
-        y_pred_persistence = np.ravel(y_original.iloc[y_index_valid])
+        y_pred_persistence = np.ravel(y_train.iloc[y_t_index_valid])
 
         y_val_index = y_val_original.index.values
         y_val_index_valid = y_val_index[(y_val_index % day_length) < (day_length - hor_pred_indices)]
         y_pred_persistence_val = np.ravel(y_val_original.iloc[y_val_index_valid])
         print('Building X matrix...Same thing as before...\n')
-        x = x_original.iloc[y_index_valid] #like our randomization but just picking the same indices
+        x_t = x_train.iloc[y_t_index_valid] #like our randomization, just picking the same indices
         x_val = x_val_original.iloc[y_val_index_valid]
         y_val = np.ravel(y_val_original.iloc[y_val_index_valid + hor_pred_indices])
 #STATIONS TO SELECT:
 
         for ft in feature_values:
-            X = pd.DataFrame()
+            X_t = pd.DataFrame()
             X_val = pd.DataFrame()
             
             if ft[0] == 'all':
-                X = x
+                X_t = x_t
                 X_val = x_val
             else:
                 for n in range(len(ft)):
@@ -161,17 +170,19 @@ for hp in hor_pred:
 
                         if x.columns[i].startswith(ft[n]):
 
-                            X = pd.concat([X,x[x.columns[i]]],axis=1,ignore_index=True)
+                            X_t = pd.concat([X,x[x.columns[i]]],axis=1,ignore_index=True)
                             X_val = pd.concat([X_val,x_val[x_val.columns[i]]],axis=1,ignore_index=True)
 
             scrs = []
             scrs_val = []
-            k1_train_scores = []
-            k1_validation_scores = []
-            kc_train_scores = []
-            kc_validation_scores = []
-            k1_kc_train_scores = []
-            k1_kc_validation_scores = []
+            rmse_train_scores = []
+            rmse_validation_scores = []
+            rmse_train_pers_scores = []
+            rmse_validation_pers_scores = []
+            skill_train_scores = []
+            skill_validation_scores = []
+            nrmse_train_scores = []
+            nrmse_validation_scores = []
 
             if isinstance(hls,tuple) == False:
                  if hls > 10:
@@ -225,7 +236,7 @@ for hp in hor_pred:
                 nn_model = MLPRegressor(hidden_layer_sizes=hls,alpha=av)
                 print('Fitting...\n'+output_text+'\n')
                 fit_start = time.time()
-                nn_model.fit(X,y)
+                nn_model.fit(X_t,y_t)
                 fit_end = time.time()
                 fit_time = fit_end - fit_start
                 fit_min = int(fit_time / 60)
@@ -235,79 +246,66 @@ for hp in hor_pred:
                 joblib.dump(nn_model, model_filename)
 
                 print('Predicting...\n')
-                y_pred_train = nn_model.predict(X)
+                y_pred_train = nn_model.predict(X_t)
                 print('Validating...\n')
                 y_pred_val = nn_model.predict(X_val)
                 print('Getting scores\n')
-                scr = nn_model.score(X,y)
+                scr = nn_model.score(X_t,y_t)
                 scr_val = nn_model.score(X_val,y_val)
                 scrs.append(scr)
                 scrs_val.append(scr_val)
 
-                kc_train = np.mean((y_pred_persistence - y_pred_train) **2) #our persistence score
-                kc_val = np.mean((y_pred_persistence_val - y_pred_val) **2)
-                kc_train_scores.append(kc_train)
-                kc_validation_scores.append(kc_val)
+                rmse_train_pers = (np.mean((y_pred_persistence - y_t) **2)) ** 0.5 #our persistence score
+                rmse_val_pers = (np.mean((y_pred_persistence_val - y_val) **2)) ** 0.5
+                rmse_train_pers_scores.append(rmse_train_pers)
+                rmse_validation_pers_scores.append(rmse_val_pers)
 
 
-                k1val = np.mean((y_pred_val - y_val) **2) #our "custom" score for validation
-                k1train = np.mean((y_pred_train - y) **2) #our "custom" score for training
-                k1_train_scores.append(k1train)
-                k1_validation_scores.append(k1val)
+                rmse_val = (np.mean((y_pred_val - y_val) **2)) ** 0.5 
+                rmse_train = (np.mean((y_pred_train - y_t) **2)) ** 0.5 
 
+                nrmse_train = rmse_train / y_t.max() * 100
+                nrmse_val = rmse_val / y_val.max() * 100
 
-                k1_kc_train = k1train / kc_train
-                k1_kc_val = k1val / kc_val
-                k1_kc_train_scores.append(k1_kc_train)
-                k1_kc_validation_scores.append(k1_kc_val)
+                rmse_train_scores.append(rmse_train)
+                rmse_validation_scores.append(rmse_val)
+                nrmse_train_scores.append(nrmse_train)
+                nrmse_validation_scores.append(nrmse_val)
 
+                nrmse_t_final.append(nrmse_train)
+                nrmse_v_final.append(nrmse_val)
+
+                skill_train = (1 - rmse_train / rmse_train_pers) * 100
+                skill_val = (1 - rmse_val / rmse_val_pers) * 100
+                skill_train_scores.append(skill_train)
+                skill_validation_scores.append(skill_val)
+
+                skill_t_final.append(skill_train)
+                skill_v_final.append(skill_val)
 
 
             print('Saving figures and .csv file\n')
-            #SAVING FIGURES FOR FIRST SCORE:
-            plt.figure()
-            plt.semilogx(alpha_values,scrs,label='train')
-            plt.semilogx(alpha_values,scrs_val,label='validation')
-            plt.legend(loc='best', fancybox=True, framealpha=0.5)
-            plt.title('MLPRegressor score. Alpha dependence for feature values {} and {} of the data. Horizon prediction: {} . {} hidden layers with {} neurons'.format(stations,prcnt,hp,len_hls,hls_neurons_str))
-            plt.savefig(graphs_folder + output_text + '.png',bbox_inches = 'tight')
-            plt.close()
-
-            #SAVING FIGURES FOR CUSTOM SCORES AND COMPARATIVES
-            plt.figure()
-            plt.semilogx(alpha_values,k1_train_scores,label='k1 custom train score')
-            plt.semilogx(alpha_values,k1_validation_scores,label='k1 custom validation score')
-            plt.semilogx(alpha_values,kc_train_scores,label='kc train persistence model score')
-            plt.semilogx(alpha_values,kc_validation_scores,label='kc validation persistence model score')
-            plt.legend(loc='best', fancybox=True, framealpha=0.5)
-            plt.title('Custom scores. Alpha dependence for feature values {} and {} of the data. Horizon prediction: {} . {} hidden layers with {} neurons'.format(stations,prcnt,hp,len_hls,hls_neurons_str))
-            plt.savefig(graphs_folder + output_text + '_custom_scores.png',bbox_inches='tight')
-            plt.close()
-
-            #SAVING FIGURES FOR COMPARATIVE OF SCORES K1/KC
-
-            plt.figure()
-            plt.semilogx(alpha_values,k1_kc_train_scores,label='k1/kc train score')
-            plt.semilogx(alpha_values,k1_kc_validation_scores,label='k1/kc validation score')
-
-            plt.legend(loc='best', fancybox=True, framealpha=0.5)
-            plt.title('Custom scores ratio. Alpha dependence for feature values {} and {} of the data. Horizon prediction: {} . {} hidden layers with {} neurons'.format(stations,prcnt,hp,len_hls,hls_neurons_str))
-            plt.savefig(graphs_folder + output_text + '_custom_scores_ratio.png',bbox_inches='tight')
-            plt.close()
 
             #SAVING DATA AS .CSV
-            alphas = pd.DataFrame(alpha_values)
             scores = pd.DataFrame(scrs)
             scores_validation = pd.DataFrame(scrs_val)
-            scores_k1_validation = pd.DataFrame(k1_validation_scores)
-            scores_k1_train = pd.DataFrame(k1_train_scores)
-            scores_kc_train = pd.DataFrame(kc_train_scores)
-            scores_kc_validation = pd.DataFrame(kc_validation_scores)
-            scores_k1_kc_validation = pd.DataFrame(k1_kc_validation_scores)
-            scores_k1_kc_train = pd.DataFrame(k1_kc_train_scores)
-            df_alphascores = pd.concat([alphas,scores,scores_validation,scores_k1_train,scores_k1_validation,scores_kc_train,scores_kc_validation,scores_k1_kc_train,scores_k1_kc_validation],axis=1,ignore_index=True)
+            scores_k1_validation = pd.DataFrame(rmse_validation_scores)
+            scores_k1_train = pd.DataFrame(rmse_train_scores)
+            scores_kc_train = pd.DataFrame(rmse_train_pers_scores)
+            scores_kc_validation = pd.DataFrame(rmse_validation_pers_scores)
+            scores_nrmse_train = pd.DataFrame(nrmse_train_scores)
+            scores_nrmse_validation = pd.DataFrame(nrmse_validation_scores)
+            scores_k1_kc_validation = pd.DataFrame(skill_validation_scores)
+            scores_k1_kc_train = pd.DataFrame(skill_train_scores)
+            df_alphascores = pd.concat([scores,scores_validation,scores_k1_train,scores_k1_validation,scores_kc_train,scores_kc_validation,scores_nrmse_train,scores_nrmse_validation,scores_k1_kc_train,scores_k1_kc_validation],axis=1,ignore_index=True)
 
-            df_alphascores.columns = ['alpha_values','scores_train_sklearn','scores_validation_sklearn','k1_score_train','k1_score_validation','kc_score_persistence_train','kc_score_persistence_validation','SCORE_k1/kc_train','SCORE_k1/kc_validation']
+            df_alphascores.columns = ['r2_train_sklearn','r2_validation_sklearn','rmse_train','rmse_validation','rmse_persistence_train','rmse_persistence_validation','nrmse_train','nrmse_validation','skill_train','skill_validation']
             df_alphascores.to_csv(csvs_folder + output_text + '.csv',header=True,index=False)
+    
+    
 
-            print('Figures and .csv generated!\n')
+#For use with ONE ts and ONE ft set
+total_scores = pd.DataFrame({'forecast_prediction':forecast_prediction,'nrmse_train':nrmse_t_final,'nrmse_validation':nrmse_v_final,'skill_train':skill_t_final,'skill_validation':skill_v_final})
+total_scores.to_csv(csvs_folder + '/scores_report_for_'+len_hls+'_hidden_layers_with_'+hls_neurons_str+'neurons.csv',header=True,index=False)
+
+print('Figures and .csv generated!\n')
