@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-#This file creates matrices for using with any ML algorithm.
-#It creates one matrix for every single day to facilitate removing days for the final matrix.
+#This file creates matrices for every day ready for every ML algorithm.
 
 import os
 import pandas as pd
@@ -42,6 +41,7 @@ nstations = len(stations)
 aggregation = cfg_data["aggregation"]
 relative = cfg_data["relative"]
 decimal_pos = cfg_data["decimal_pos"]
+az_el = cfg_data['az_el']
 
 if relative:
     rad_col = '_rel'
@@ -87,7 +87,7 @@ for station in cfg_data['params']:
     index = params[station]['nsamples'] + params[station]['offset']
     if index > first_prediction_index:
         first_prediction_index = index
-first_prediction = first_prediction_index * time_granularity
+first_prediction = first_prediction_index * (time_granularity)
 
 for date in dates:
 
@@ -104,7 +104,9 @@ for date in dates:
 
     # We will skip intermediate samples for now
     
-    y_temp = y[first_prediction::time_granularity]
+    y_temp = y[first_prediction+time_granularity::time_granularity] #We lose one sample but we don't have an error calculating the mean for the first sample
+
+
     last_prediction = y_temp.last_valid_index()
     if aggregation == 'skip':
         y = y_temp
@@ -113,7 +115,7 @@ for date in dates:
         _y = []
         samp = int((last_prediction - first_prediction + time_granularity) / time_granularity)
         for i in range(samp):
-            a = round(y[first_prediction + i*time_granularity:first_prediction + (i+1) * time_granularity].mean(),decimal_pos)
+            a = round(y[first_prediction + (i)*time_granularity:first_prediction + (i+1) * time_granularity].mean(),decimal_pos)
             _y.append(a)
         y = pd.DataFrame(_y)
     
@@ -125,7 +127,7 @@ for date in dates:
         nsamples = params[station]['nsamples']
         offset = params[station]['offset']
         df = pd.read_csv(orig_folder + station + '/' + date + '_' + station + '.csv').round(decimal_pos)
-        gr = df[df.columns[-1]].values
+        gr = df[df.columns[-1]].values #GhiRel
         if max_dist < (nsamples + offset):
             max_dist = nsamples + offset
 
@@ -133,24 +135,24 @@ for date in dates:
         # print('TOTAL ROWS: {}\n'.format(len(df)))
 
         for ns in range(nsamples):
-            dist = (ns + offset + 1) * time_granularity
-            first_sample = first_prediction - dist
+            dist = (ns + offset) * time_granularity
+            first_sample = first_prediction - dist + time_granularity
             last_sample = last_prediction - dist
             # Rename column to include ghi/rel and ns
             col_name = station + rad_col + '_ns' + str(ns)
             ghi_means = []
 
             if aggregation == 'skip':
-               
+                
                _x = df[df.columns[-1]][first_sample:last_sample + time_granularity:time_granularity]
                _x.columns = [col_name]
             # print('FIRST SAMPLE: {}\nLAST SAMPLE: {}\nROWS: {}\n'.format(_x.first_valid_index(), _x.last_valid_index(), len(_x)))
             if aggregation == 'mean':
                 
                 _x = pd.DataFrame()
-                samp = int((last_sample + time_granularity - first_sample)/time_granularity)
+                samp = int((last_sample - first_sample + time_granularity)/time_granularity)
                 for i in range(samp):
-                    a = round(gr[first_sample + i*time_granularity:first_sample + (i+1)*time_granularity].mean(),decimal_pos)
+                    a = round(gr[first_sample + (i-1)*time_granularity:first_sample + (i)*time_granularity].mean(),decimal_pos)
                     ghi_means.append(a)
                     
                 _x = pd.DataFrame(ghi_means)
@@ -159,11 +161,15 @@ for date in dates:
             # Only radiation is needed. We need to reset the index in order to concatenate columns properly
             x = pd.concat([x,_x.reset_index(drop=True)], axis=1)
     # Rename column to include ghi/rel and target
+    
+    if az_el:
+        x = pd.concat([x,y['elevation'],y['azimut'].reset_index(drop=True)], axis=1)
+
     col_name = target_station + rad_col + '_target'
     y = y.rename(columns={target_station + rad_col: col_name})
     # Only radiation and sun position is needed. We need to reset the index in order to concatenate columns properly
     matrix = pd.concat([x,y[[col_name]].reset_index(drop=True)], axis=1)
-
+    matrix = matrix[:-1] #Last x row has NaN, we just remove it, it's easier
     #WARNING: this will overwrite any existing CSV file with the same path and name
-    matrix.to_csv(dest_folder + '_' + target_station + '_' + date + '_' + str(time_granularity) + '_' + str(max_dist) + '_'  + aggregation + '_' + str(dest_file_suffix), header=True, index=False)
+    matrix.to_csv(dest_folder + '/' + target_station + '_' + date + '_' + str(time_granularity) + '_' + str(max_dist) + '_'  + aggregation + '_' + str(dest_file_suffix), header=True, index=False)
 
